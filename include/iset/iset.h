@@ -1,10 +1,15 @@
 #ifndef TRANSPILER_ISET_H
 #define TRANSPILER_ISET_H
+#include <stdint.h>
+#include <stdlib.h>
+#include <sys/types.h>
 
 /* instruction sets */
 
 /* dependency-conscious instruction */
 struct instruction {
+  int branch; /* instruction is a branch, jump, leave, return, etc. */
+
   /* input registers */
 
   struct rid *inregs;
