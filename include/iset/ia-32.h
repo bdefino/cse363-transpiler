@@ -1,5 +1,5 @@
-#ifndef TRANSPILER_ISET_X86_64_H
-#define TRANSPILER_ISET_X86_64_H
+#ifndef TRANSPILER_ISET_IA_32_H
+#define TRANSPILER_ISET_IA_32_H
 #include <stdint.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -7,7 +7,7 @@
 
 #include "iset/iset.h"
 
-/* x86-64 instruction set */
+/* xIA-32 instruction set */
 
 //////////////////////////////////////////////////////////////////////////////////////
 
