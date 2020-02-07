@@ -3,16 +3,16 @@
 
 ## To Do
 ### Binary Executable Formats
-- ELF
-- PE
+- [ELF](wiki.osdev.org/ELF)
+- [PE](wiki.osdev.org/PE)
 
 ### Instruction Sets
 #### Reduced
-- MIPS (32-bit)
+- [MIPS](wiki.osdev.org/MIPS_Overview)
 
 #### Complete
 - IA-32
-- x86-64
+- [x86-64](wiki.osdev./org/X86-64_Instruction_Encoding)
 
 ### Transpiler
 - Target Canonicalization
