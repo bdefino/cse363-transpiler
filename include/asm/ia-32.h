@@ -1,12 +1,12 @@
-#ifndef TRANSPILER_ISET_IA_32_H
-#define TRANSPILER_ISET_IA_32_H
+#ifndef TRANSPILER_ASM_IA_32_H
+#define TRANSPILER_ASM_IA_32_H
 #include <errno.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "iset/iset.h"
+#include "asm/iset.h"
 
 /* IA-32 instruction set */
 

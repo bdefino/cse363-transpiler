@@ -1,5 +1,5 @@
-#ifndef TRANSPILER_ISET_H
-#define TRANSPILER_ISET_H
+#ifndef TRANSPILER_ASM_ISET_H
+#define TRANSPILER_ASM_ISET_H
 #include <stdint.h>
 #include <sys/types.h>
 

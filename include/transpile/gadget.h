@@ -5,8 +5,8 @@
 #include <stdlib.h>
 #include <sys/types.h>
 
+#include "asm/iset.h"
 #include "bxix/bxix.h"
-#include "iset/iset.h"
 
 /* gadget identification and searching */
 
