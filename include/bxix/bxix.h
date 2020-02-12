@@ -9,6 +9,8 @@
 
 /* binary executable instruction examiner API */
 struct bxix {
+  char *binexe; /* path to the binary executable */
+
   /* contextualize the examiner with a file */
   int (*examine)(struct bxix *bxix, const int fd);
 
