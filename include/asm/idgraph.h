@@ -18,49 +18,49 @@ a linked list approach is used
 struct idgraph {
   size_t ecount; /* edge count */
   size_t vcount; /* vertex count */
-  struct idgraph_dependents_ll **vertices; /* hash table */
+  struct idgraph_dependents *vertices; /* sorted array */
 };
 
 /* an instruction, and its dependents */
-struct idgraph_dependents_ll {
-  struct idgraph_dependent_llnode *head;
+struct idgraph_dependents {
+  struct idgraph_dependents_llnode *head;
   struct instruction *instruction;
-  struct idgraph_dependent_llnode *tail;
+  struct idgraph_dependents_llnode *tail;
 };
 
 /* linked list of dependent instructions */
-struct idgraph_dependent_llnode {
+struct idgraph_dependents_llnode {
   struct instruction *instruction;
-  struct idgraph_dependent_llnode *next;
+  struct idgraph_dependents_llnode *next;
 };
 
-int idgraph_fini(struct igraph *graph);
+int idgraph_fini(struct idgraph *graph);
 
 /* compute a hash of the raw instruction */
 static int idgraph__ihash(size_t *dest, struct instruction *instruction);
 
-int idgraph_init(struct igraph *dest, const size_t count,
+int idgraph_init(struct idgraph *dest, const size_t count,
   const struct instruction **instructions);
 
 /* canonicalize the topological order of the instructions (into an array) */
-int idgraph_topology_canonicalize(const struct igraph *graph,
+int idgraph_topology_canonicalize(const struct idgraph *graph,
   struct instruction **dest, const size_t destlen);
 
 /*
 mutate the topological order of the instructions (into an array),
 selecting each instruction via `selector` (array passed is canonicalized)
 */
-int idgraph_topology_mutate(const struct igraph *graph,
+int idgraph_topology_mutate(const struct idgraph *graph,
   struct instruction **dest, const size_t destlen,
   int (*selector)(const struct idgraph *, struct instruction *, const size_t,
     const struct instruction **));
 
 /* randomize the topological order of the instructions (into an array) */
-int idgraph_topology_randomize(const struct igraph *graph,
+int idgraph_topology_randomize(const struct idgraph *graph,
   struct instruction **dest, const size_t destlen);
 
 /* selector for a random topological order */
-static int idgraph_topology_randomize__selector(const struct igraph *graph,
+static int idgraph_topology_randomize__selector(const struct idgraph *graph,
   const size_t count, const struct instruction **instructions);
 
 #endif
