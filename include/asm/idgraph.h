@@ -18,7 +18,7 @@ a linked list approach is used
 struct idgraph {
   size_t ecount; /* edge count */
   size_t vcount; /* vertex count */
-  struct idgraph_dependents *vertices; /* sorted array */
+  struct idgraph_dependents *vertices; /* sorted array; search via `bsearch` */
 };
 
 /* an instruction, and its dependents */
