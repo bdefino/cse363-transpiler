@@ -12,18 +12,20 @@
 
 /* MIPS instruction set */
 struct mips_iset {
-  struct iset super;
+	struct iset super;
 };
 
-int mips_iset_init(struct mips_iset *dest);
+int
+mips_iset_init(struct mips_iset *dest);
 
 /* read the next instruction from a file */
-int mips_iset_read(struct mips_iset *iset, struct instruction *dest,
-  const int fd);
+int
+mips_iset_read(struct mips_iset *iset, struct instruction *dest, const int fd);
 
 /* write the next instruction to a file */
-int mips_iset_write(struct mips_iset *iset,
-  const struct instruction *instruction, const int fd);
+int
+mips_iset_write(struct mips_iset *iset, const struct instruction *instruction,
+	const int fd);
 
 #endif
 

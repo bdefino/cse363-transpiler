@@ -12,18 +12,21 @@
 
 /* IA-32 instruction set */
 struct ia_32_iset {
-  struct iset super;
+	struct iset super;
 };
 
-int ia_32_iset_init(struct ia_32_iset *dest);
+int
+ia_32_iset_init(struct ia_32_iset *dest);
 
 /* read the next instruction from a file */
-int ia_32_iset_read(struct ia_32_iset *iset, struct instruction *dest,
-  const int fd);
+int
+ia_32_iset_read(struct ia_32_iset *iset, struct instruction *dest,
+	const int fd);
 
 /* write the next instruction to a file */
-int ia_32_iset_write(struct ia_32_iset *iset,
-  const struct instruction *instruction, const int fd);
+int
+ia_32_iset_write(struct ia_32_iset *iset,
+	const struct instruction *instruction, const int fd);
 
 #endif
 

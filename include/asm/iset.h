@@ -7,37 +7,39 @@
 
 /* dependency-conscious instruction */
 struct instruction {
-  int branch; /* instruction is a branch, jump, leave, return, etc. */
+	int		branch; /* instruction is a branch */
 
-  /* (machine-)encoded instruction */
+	/* (machine-)encoded instruction */
 
-  char *encoded;
-  size_t encodedlen;
+	char		*encoded;
+	size_t		encodedlen;
 
-  /* input registers */
+	/* input registers */
 
-  struct rid *inregs;
-  unsigned short inregslen;
-  
-  /* output registers */
+	struct rid	*inregs;
+	unsigned short	inregslen;
+	
+	/* output registers */
 
-  struct rid *outregs;
-  unsigned short outregslen;
+	struct rid	*outregs;
+	unsigned short	outregslen;
 };
 
 /* instruction set API */
 struct iset {
-  /* read the next instruction from a file */
-  int (*read)(struct iset *iset, struct instruction *dest, const int fd);
+	/* read the next instruction from a file */
+	int	(*read)(struct iset *iset, struct instruction *dest,
+			const int fd);
 
-  /* write the next instruction to a file */
-  int (*write)(struct iset *iset, const struct instruction *instruction,
-    const int fd);
+	/* write the next instruction to a file */
+	int	(*write)(struct iset *iset,
+			const struct instruction *instruction,
+			const int fd);
 };
 
 /* register identifier */
 struct rid {
-  size_t id;
+	size_t id;
 };
 
 #endif

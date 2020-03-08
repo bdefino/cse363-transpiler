@@ -6,17 +6,19 @@
 
 /* endianness */
 
-/* endiannesses */
-enum endianness {
-  ENDIANNESS_BIG,
-  ENDIANNESS_LITTLE
-};
+#undef ENDIANNESS_BIG
+#undef ENDIANNESS_LITTLE
+
+#define ENDIANNESS_BIG (~0x0)
+#define ENDIANNESS_LITTLE 0x0
 
 /* determine the native endianness */
-int endianness_native(enum endianness *dest);
+int
+endianness_native(int *dest);
 
 /* toggle endianness of an array */
-int endianness_toggle(char *a, size_t len);
+int
+endianness_toggle(char *a, size_t len);
 
 #endif
 

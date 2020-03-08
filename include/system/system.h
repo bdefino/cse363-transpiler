@@ -9,8 +9,8 @@
 
 /* system abstraction */
 struct system {
-  enum endianness endianness;
-  size_t ptrlen;
+	int	endianness;
+	size_t	ptrlen;
 };
 
 #endif
