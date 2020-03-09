@@ -18,6 +18,13 @@ bxix_elf_examine(struct bxix_elf *bxix, const int fd)
 		goto bubble;
 	}
 	((struct bxix *) bxix)->fd = fd;
+
+	/* seek to beginning */
+
+	if (lseek(fd, 0, SEEK_SET)) {
+		retval = -errno;
+		goto bubble;
+	}
 	
 	/* read header identity */
 
