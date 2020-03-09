@@ -27,6 +27,11 @@ extern const struct bxix_elf {
 		Elf64_Ehdr	_64;
 		char		raw[sizeof(Elf64_Ehdr)]; /* force packing */
 	}	header;
+	union {
+		Elf32_Phdr	_32;
+		Elf64_Phdr	_64;
+		char		raw[sizeof(Elf64_Ehdr)]; /* force packing */
+	}	pheader;
 } bxix_elf;
 
 /* contextualize the examiner with a file */
