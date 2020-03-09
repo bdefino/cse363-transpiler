@@ -8,10 +8,26 @@
 #include <unistd.h>
 
 #include "bxix/bxix.h"
+#include "io.h"
 
 /* ELF binary executable instruction examiner */
 
-extern const struct bxix bxix_elf;
+#undef BXIX_ELF_BAD_CLASS
+#undef BXIX_ELF_WIDTH_32
+#undef BXIX_ELF_WIDTH_64
+
+#define BXIX_ELF_BAD_CLASS	0x1
+#define BXIX_ELF_WIDTH_32	0x20
+#define BXIX_ELF_WIDTH_64	0x40
+
+extern const struct bxix_elf {
+	struct bxix super;
+	union {
+		Elf32_Ehdr	_32;
+		Elf64_Ehdr	_64;
+		char		raw[sizeof(Elf64_Ehdr)]; /* force packing */
+	}	header;
+} bxix_elf;
 
 /* contextualize the examiner with a file */
 int

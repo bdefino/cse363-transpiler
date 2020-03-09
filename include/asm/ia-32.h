@@ -7,6 +7,7 @@
 #include <unistd.h>
 
 #include "asm/iset.h"
+#include "io.h"
 
 /* IA-32 instruction set */
 
