@@ -74,5 +74,6 @@ Target obfuscation.
 - Target obfuscation
 
 # Sources
+- [ELF](https://wiki.osdev.org/ELF)
 - [Netwide Assembler]()
 
