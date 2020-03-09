@@ -17,7 +17,7 @@ bxix_elf_examine(struct bxix_elf *bxix, const int fd)
 		retval = -EFAULT;
 		goto bubble;
 	}
-	bxix->fd = fd;
+	((struct bxix *) bxix)->fd = fd;
 	
 	/* read header identity */
 
