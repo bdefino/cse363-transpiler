@@ -1,0 +1,23 @@
+baileys transpoilerssofucker
+
+1.General purpose transpoilerssofucker
+Takes an array of instructions and replicate what they would do by using ROP to chain gadgets together.
+
+The design
+
+Main loop
+    parse args
+    calls driver program(transpoiler driver)
+    -Go through the desired payload
+    -figure out the graph of relationships between gadgets and payload
+    -compare code
+    examine binaries
+    go through each binary and get useful gadgets
+    
+    scan binary functions(in text), try to match up gadget
+
+
+    toplogical order(algos lol)
+    LOL OBFUSCATE/CANNOCIALIZE WHAT WE MADE
+    -basically, figure out the 'best/hidden' way to generate the payload gadgets what ever the fuck to prevent 
+    some researcher from understanding what the fuck we did lol
