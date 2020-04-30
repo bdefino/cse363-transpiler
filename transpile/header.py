@@ -1,50 +1,52 @@
-# included flags from https://github.com/JonathanSalwan/ROPgadget/blob/master/ropgadget/loaders/elf.py
-# pip install macholib
-import MachO
 import capstone
+import filebytes
+import struct
 
 
-class ELFFlags(object):
-    ELFCLASS32 = 0x01
-    ELFCLASS64 = 0x02
-    EI_CLASS = 0x04
-    EI_DATA = 0x05
-    ELFDATA2LSB = 0x01
-    ELFDATA2MSB = 0x02
-    EM_386 = 0x03
-    EM_X86_64 = 0x3e
-    EM_ARM = 0x28
-    EM_MIPS = 0x08
-    EM_SPARCv8p = 0x12
-    EM_PowerPC = 0x14
-    EM_ARM64 = 0xb7
+class ELFMagic(object):
+    MAGIC = [0x7F454C46]
+    OFFSET = [0x0]
+    SIZE = 4
 
 
-class MACHOFlags(object):
-    MAGIC = 0xfeedfacf
-    CPU_TYPE_I386 = 0x7
-    CPU_TYPE_X86_64 = (CPU_TYPE_I386 | 0x1000000)
-    CPU_TYPE_MIPS = 0x8
-    CPU_TYPE_ARM = 12
-    CPU_TYPE_ARM64 = (CPU_TYPE_ARM | 0x1000000)
-    CPU_TYPE_SPARC = 14
-    CPU_TYPE_POWERPC = 18
-    CPU_TYPE_POWERPC64 = (CPU_TYPE_POWERPC | 0x1000000)
-    LC_SEGMENT = 0x1
-    LC_SEGMENT_64 = 0x19
-    S_ATTR_SOME_INSTRUCTIONS = 0x00000400
-    S_ATTR_PURE_INSTRUCTIONS = 0x80000000
+class MACHOMagic(object):
+    MAGIC = [0xFEEDFACE, 0xFEEDFACF]
+    OFFSET = [0x0, 0x1000]
+    SIZE = 4
 
 
-class Header():
+class PEMagic(object):
+    MAGIC = [0x4D5A]
+    OFFSET = [0x0]
+    SIZE = 2
+
+
+class Header:
     def __init__(self, binary):
-        self.binary = bytearray(binary)
+        self.binary = binary
         self.format = None
         self.endianess = None
         self.isa = None
         self.mode = None
         self.entry_point = None
 
-        self.parse()
-
-        def parse(self):
+    def identify(self):
+        """Auto-identify the type of binary"""
+        """ELF check"""
+        if struct.pack(">I", ELFMagic.MAGIC[0]) == self.binary[ELFMagic.OFFSET[0]: ELFMagic.SIZE]:
+            print("ELF")
+            return
+        """MachO check"""
+        if struct.pack(">I", MACHOMagic.MAGIC[0]) == self.binary[MACHOMagic.OFFSET[0]: MACHOMagic.SIZE]:
+            print("MachO")
+            return
+        elif struct.pack(">I", MACHOMagic.MAGIC[0]) == self.binary[MACHOMagic.OFFSET[1]: MACHOMagic.SIZE]:
+            print("MachO")
+            return
+        elif struct.pack(">I", MACHOMagic.MAGIC[1]) == self.binary[MACHOMagic.OFFSET[0]: MACHOMagic.SIZE]:
+            print("MachO")
+            return
+        elif struct.pack(">I", MACHOMagic.MAGIC[1]) == self.binary[MACHOMagic.OFFSET[1]: MACHOMagic.SIZE]:
+            print("MachO")
+            return
+        """PE check"""
