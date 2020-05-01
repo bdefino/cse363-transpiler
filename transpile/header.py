@@ -32,21 +32,40 @@ class Header:
 
     def identify(self):
         """Auto-identify the type of binary"""
-        """ELF check"""
-        if struct.pack(">I", ELFMagic.MAGIC[0]) == self.binary[ELFMagic.OFFSET[0]: ELFMagic.SIZE]:
+        if self.elf_check(self.binary):
             print("ELF")
-            return
-        """MachO check"""
-        if struct.pack(">I", MACHOMagic.MAGIC[0]) == self.binary[MACHOMagic.OFFSET[0]: MACHOMagic.SIZE]:
+        if self.macho_check(self.binary):
             print("MachO")
-            return
-        elif struct.pack(">I", MACHOMagic.MAGIC[0]) == self.binary[MACHOMagic.OFFSET[1]: MACHOMagic.SIZE]:
-            print("MachO")
-            return
-        elif struct.pack(">I", MACHOMagic.MAGIC[1]) == self.binary[MACHOMagic.OFFSET[0]: MACHOMagic.SIZE]:
-            print("MachO")
-            return
-        elif struct.pack(">I", MACHOMagic.MAGIC[1]) == self.binary[MACHOMagic.OFFSET[1]: MACHOMagic.SIZE]:
-            print("MachO")
-            return
         """PE check"""
+
+    def elf_check(self, binary):
+        """ELF check"""
+        """Big Endian"""
+        if struct.pack(">I", ELFMagic.MAGIC[0]) == binary[ELFMagic.OFFSET[0]: ELFMagic.SIZE]:
+            return True
+        """Little Endian"""
+        if struct.pack("<I", ELFMagic.MAGIC[0]) == binary[ELFMagic.OFFSET[0]: ELFMagic.SIZE]:
+            return True
+        return False
+
+    def macho_check(self, binary):
+        """MachO check"""
+        """Big Endian"""
+        if struct.pack(">I", MACHOMagic.MAGIC[0]) == binary[MACHOMagic.OFFSET[0]: MACHOMagic.SIZE]:
+            return True
+        if struct.pack(">I", MACHOMagic.MAGIC[0]) == binary[MACHOMagic.OFFSET[1]: MACHOMagic.SIZE]:
+            return True
+        if struct.pack(">I", MACHOMagic.MAGIC[1]) == binary[MACHOMagic.OFFSET[0]: MACHOMagic.SIZE]:
+            return True
+        if struct.pack(">I", MACHOMagic.MAGIC[1]) == binary[MACHOMagic.OFFSET[1]: MACHOMagic.SIZE]:
+            return True
+        """Little Endian"""
+        if struct.pack("<I", MACHOMagic.MAGIC[0]) == binary[MACHOMagic.OFFSET[0]: MACHOMagic.SIZE]:
+            return True
+        if struct.pack("<I", MACHOMagic.MAGIC[0]) == binary[MACHOMagic.OFFSET[1]: MACHOMagic.SIZE]:
+            return True
+        if struct.pack("<I", MACHOMagic.MAGIC[1]) == binary[MACHOMagic.OFFSET[0]: MACHOMagic.SIZE]:
+            return True
+        if struct.pack("<I", MACHOMagic.MAGIC[1]) == binary[MACHOMagic.OFFSET[1]: MACHOMagic.SIZE]:
+            return True
+        return False

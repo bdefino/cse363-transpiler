@@ -1,6 +1,6 @@
 import header
 
-f = open("../key", "br")
+f = open("../apple", "br")
 x = f.read()
 head = header.Header(x)
 head.identify()
