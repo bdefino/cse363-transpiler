@@ -1,6 +1,5 @@
-import header
+import analyze
 
-f = open("../apple", "br")
+f = open("../linux_64", "br")
 x = f.read()
-head = header.Header(x)
-head.identify()
+head = analyze.Binary(x)
