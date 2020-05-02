@@ -14,7 +14,7 @@ class BaseInstructionIO:
     def dump(instructions, fp):
         """dump instructions to a file"""
         raise NotImplementedError()
-    
+
     @staticmethod
     def load(fp, isas):
         """load instructions from a file"""
@@ -47,7 +47,7 @@ class MachineCodeIO(BaseInstructionIO):
     def dump(instructions, fp):
         """dump machine code to a file"""
         return AssemblyIO.dump(b';'.join((i.bytes for i in instructions)), fp)
-    
+
     @staticmethod
     def load(fp, isas, offset = 0):
         """load machine code from a file based on an ISA"""

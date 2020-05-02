@@ -20,7 +20,7 @@ def parse(s):
         arch, mode = filter(components)
     except ValueError:
         raise ValueError("invalid ISA")
-    
+
     # classify architecture
 
     if arch == "mips":
@@ -29,7 +29,7 @@ def parse(s):
     elif arch == "x86":
         output["capstone"][0] = capstone.CS_ARCH_X86
         output["keystone"][0] = keystone.KS_ARCH_X86
-    
+
     # classify mode
 
     if mode == "32":
