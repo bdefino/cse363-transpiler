@@ -1,14 +1,25 @@
 import capstone
+import io
 import keystone
 import os
 import re
 
-from . import header, isa
+from . import analyze, header, isa
 
-__doc__ = "instruction serialization"
+__doc__ = "instruction de/serialization"
+
+def pload(path, sections = None, text = False):
+    """
+    load `BaseInstructionIO` instances corresponding to various sections within
+    an object file
+    """
+    with open(path, "rb") as fp:
+        binary = analyze.Binary(fp.read())
+    sections = sections if isinstance(sections, dict) else {"text": {}}
+    return [sections]########################################################################section headers (from analyze) -> `BaseInstructionIO` instances
 
 class BaseInstructionIO:
-    """instruction serialization"""
+    """instruction de/serialization"""
 
     @staticmethod
     def dump(instructions, fp):
@@ -54,3 +65,4 @@ class MachineCodeIO(BaseInstructionIO):
         if not isinstance(isas, str):
             raise TypeError("expected an ISA string")
         return capstone.Cs(*isa.parse(isas)["capstone"]).disasm(fp.read(), offset)
+

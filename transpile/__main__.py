@@ -77,7 +77,7 @@ def main(argv):
     except ValueError:
         help(argv[0])
         return 1
-    
+
     for k, v in opts:
         if k == "-a":
             all_permutations = True
@@ -94,7 +94,7 @@ def main(argv):
             text = True
         elif k == "-v":
             verbosity += 1
-    
+
     if not isa:
         print("Empty ISA.", file = sys.stderr)
         help(argv[0])
