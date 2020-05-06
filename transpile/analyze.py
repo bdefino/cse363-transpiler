@@ -22,6 +22,19 @@ class PEMagic(object):
     SIZE = 2
 
 
+class CodeSlice:
+    def __init__(self, header_type, name, binary, addr, offset):
+        self.header_type = header_type
+        self.name = name
+        self.binary = binary
+        self.addr = addr
+        self.offset = offset
+
+    @property
+    def size(self):
+        return len(self.binary)
+
+
 class Binary:
     def __init__(self, binary):
         self.binary = binary
@@ -40,18 +53,27 @@ class Binary:
         # parse
         if self.type == "ELF":
             self.parse_elf()
+        elif self.type == "MACHO":
+            self.parse_macho()
 
     def parse_elf(self):
-        self.elf = filebytes.elf.ELF(None, fileContent=self.binary)
+        self.elf_file = filebytes.elf.ELF(None, fileContent=self.binary)
         """architecture"""
-        self.arch = ELF_ARCH[filebytes.elf.EM[self.elf.elfHeader.header.e_machine]]
+        self.arch = ELF_ARCH[filebytes.elf.EM[self.elf_file.elfHeader.header.e_machine]]
         """mode"""
-        self.mode = ELF_MODE[self.elf.elfHeader.header.e_ident[filebytes.elf.EI.CLASS]]
+        self.mode = ELF_MODE[self.elf_file.elfHeader.header.e_ident[filebytes.elf.EI.CLASS]]
         """endianess"""
-        self.endianess = ELF_ENDIAN[self.elf.elfHeader.header.e_ident[filebytes.elf.EI.DATA]]
+        self.endianess = ELF_ENDIAN[self.elf_file.elfHeader.header.e_ident[filebytes.elf.EI.DATA]]
         """entry point"""
-        self.e_point = self.elf.entryPoint
+        self.e_point = self.elf_file.entryPoint
+        """segments"""
+        self.segments = self.elf_file.segments
+        """sections"""
+        self.sections = self.elf_file.sections
         # print(hex(self.e_point))
+
+    def parse_macho(self):
+        raise NotImplementedError
 
     def identify(self):
         """Auto-identify the type of binary"""
@@ -92,6 +114,28 @@ class Binary:
         if struct.pack("<I", MACHOMagic.MAGIC[1]) == binary[MACHOMagic.OFFSET[1]: MACHOMagic.SIZE]:
             return True
         return False
+
+    @property
+    def executable_sections(self):
+        """get the executable sections"""
+        if not self.executable_sections:
+            self.executable_sections = list()
+            for phdr in self.segments:
+                if phdr.header.p_flag & filebytes.elf.PF.EXEC > 0:
+                    self.executable_sections += [CodeSlice("program",
+                                                           str(
+                                                               filebytes.elf.PT[phdr.header.p_type]),
+                                                           phdr.raw,
+                                                           phdr.header.p_vaddr,
+                                                           phdr.header.p_offset)]
+            for shdr in self.sections:
+                if shdr.header.sh_flag & filebytes.elf.SHF.EXECINSTR:
+                    self.executable_sections += [CodeSlice("section",
+                                                           shdr.name,
+                                                           shdr.raw,
+                                                           shdr.header.sh_addr,
+                                                           shdr.header.offset)]
+        return self.executable_sections
 
 
 ELF_ARCH = {
