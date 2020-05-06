@@ -30,9 +30,7 @@ def pload(path, sections = None, text = False):
 
     with open(path, "rb") as fp:
         binary = analyze.Binary(fp.read())
-    sections = dict(sections) if isinstance(sections, dict) else \
-        {".text": None}
-    section_names = sections.keys()
+    sections = dict(sections) if isinstance(sections, dict) else {".text": None}###############################################################is the name preceded with '.'????
     sections = {k: {"base": v} for k, v in sections.items()}
 
     for extent in binary.executable_sections:
@@ -44,7 +42,7 @@ def pload(path, sections = None, text = False):
             "extent": extent,
             "instructions": baseiio.load(io.StringIO(extent.raw), binary.GET ISA, base)#############################################ISA?
         }
-    return sections
+    return filter(lambda n: isinstance(sections[n], dict), sections)
 
 class BaseInstructionIO:
     """instruction de/serialization"""
