@@ -13,22 +13,36 @@ def pload(path, sections = None, text = False):
     load `BaseInstructionIO` instances corresponding to various sections within
     an object file
 
+    sections are of the form `{name: base}`
+
     output is of the form
-        `{section: {"base": base, "instructions": capstone.Cs}}`
+        ```
+        {
+            extent (section or segment): {
+                "base": base,
+                "extent": analyze.CodeSegment,
+                "instructions": capstone.Cs
+            }
+        }
+        ```
     """
     baseiio = AssemblyIO if text else MachineCodeIO
 
     with open(path, "rb") as fp:
         binary = analyze.Binary(fp.read())
-    sections = sections if isinstance(sections, dict) else {".text": .TEXT SECTION OFFSET}#######################################################
-    sections = sections.clone()
+    sections = dict(sections) if isinstance(sections, dict) else {".text": None}###############################################################is the name preceded with '.'????
+    sections = {k: {"base": v} for k, v in sections.items()}
 
-    for section, base in sections.items():
-        sections[section] = {
-            "base": base,
-            "instructions": baseiio.load(io.StringIO(binary.APPLICABLE SECTION), binary.GET ISA, base)#############################################
+    for extent in binary.executable_sections:
+        base = sections[extent.name] \
+            if isinstance(sections.get(extent.name, None), int) \
+            else extent.base
+        sections[extent.name] = {
+            "base": base
+            "extent": extent,
+            "instructions": baseiio.load(io.StringIO(extent.raw), binary.GET ISA, base)#############################################ISA?
         }
-    return sections
+    return filter(lambda n: isinstance(sections[n], dict), sections)
 
 class BaseInstructionIO:
     """instruction de/serialization"""
