@@ -1,6 +1,7 @@
 import capstone
 import keystone
-__doc__ = "ISA parsing"
+
+__doc__ = "instruction set/architecture representation"
 
 def parse(s):
     """parse an ISA string into a capstone `(arch, mode)`"""
@@ -39,3 +40,4 @@ def parse(s):
         output["capstone"][1] = capstone.CS_MODE_64
         output["keystone"][1] = keystone.KS_MODE_64
     return {k: tuple(v) for k, v in output.items()}
+
