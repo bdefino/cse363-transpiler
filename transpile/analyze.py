@@ -44,6 +44,7 @@ class Binary:
         self.endianess = None
         self.e_point = None
         self.isa = None
+        self.__exec_sections = None
 
         self.parse()
 
@@ -118,30 +119,32 @@ class Binary:
     @property
     def executable_sections(self):
         """get the executable sections"""
-        if not self.executable_sections:
-            self.executable_sections = list()
+        if not self.__exec_sections:
+            self.__exec_sections = []
             for phdr in self.segments:
-                if phdr.header.p_flag & filebytes.elf.PF.EXEC > 0:
-                    self.executable_sections += [CodeSlice("program",
-                                                           str(
-                                                               filebytes.elf.PT[phdr.header.p_type]),
-                                                           phdr.raw,
-                                                           phdr.header.p_vaddr,
-                                                           phdr.header.p_offset)]
+                if phdr.header.p_flags & filebytes.elf.PF.EXEC > 0:
+                    self.__exec_sections += [CodeSlice("program",
+                                                       str(
+                                                           filebytes.elf.PT[phdr.header.p_type]),
+                                                       phdr.raw,
+                                                       phdr.header.p_vaddr,
+                                                       phdr.header.p_offset)]
             for shdr in self.sections:
-                if shdr.header.sh_flag & filebytes.elf.SHF.EXECINSTR:
-                    self.executable_sections += [CodeSlice("section",
-                                                           shdr.name,
-                                                           shdr.raw,
-                                                           shdr.header.sh_addr,
-                                                           shdr.header.offset)]
-        return self.executable_sections
+                if shdr.header.sh_flags & filebytes.elf.SHF.EXECINSTR:
+                    self.__exec_sections += [CodeSlice("section",
+                                                       shdr.name,
+                                                       shdr.raw,
+                                                       shdr.header.sh_addr,
+                                                       shdr.header.sh_offset)]
+        return self.__exec_sections
 
 
 ELF_ARCH = {
     filebytes.elf.EM[filebytes.elf.EM.INTEL_386]: capstone.CS_ARCH_X86,
     filebytes.elf.EM[filebytes.elf.EM.INTEL_80860]: capstone.CS_ARCH_X86,
     filebytes.elf.EM[filebytes.elf.EM.X86_64]: capstone.CS_ARCH_X86
+
+
 }
 
 ELF_MODE = {
