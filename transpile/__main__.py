@@ -101,7 +101,7 @@ def main(argv):
         return 1
 
     try:
-        target = (iio.AssemblyIO if text else iio.MachineCodeIO).load(isas, target)
+        target = (iio.AssemblyIO if text else iio.MachineCodeIO).load(isa.parse(isas), target)
         verbosity = verbosity.Verbosity()######################################################################
         output = transpile.Transpiler(target, all_permutations, recurse, verbosity)(*objs)
 
