@@ -8,7 +8,8 @@ from . import analyze
 
 __doc__ = "instruction de/serialization"
 
-def pload(path, sections = None, text = False):
+
+def pload(path, sections=None, text=False):
     """
     load `BaseInstructionIO` instances corresponding to various sections within
     an object file
@@ -30,7 +31,9 @@ def pload(path, sections = None, text = False):
 
     with open(path, "rb") as fp:
         binary = analyze.Binary(fp.read())
-    sections = dict(sections) if isinstance(sections, dict) else {".text": None}###############################################################is the name preceded with '.'????
+    sections = dict(sections) if isinstance(sections, dict) else {
+        ".text": None}  # is the name preceded with '.'????
+    ###Bryan: Yes, all sections headers begin with '.', program headers do not. You can look at .header_type of the CodeSlice object to diff the 2###
     sections = {k: {"base": v} for k, v in sections.items()}
 
     for extent in binary.executable_sections:
@@ -40,9 +43,11 @@ def pload(path, sections = None, text = False):
         sections[extent.name] = {
             "base": base
             "extent": extent,
-            "instructions": baseiio.load(io.StringIO(extent.raw), binary.GET ISA, base)#############################################ISA?
+            # ISA?
+            "instructions": baseiio.load(io.StringIO(extent.raw), binary.GET ISA, base)
         }
     return filter(lambda n: isinstance(sections[n], dict), sections)
+
 
 class BaseInstructionIO:
     """instruction de/serialization"""
@@ -57,6 +62,7 @@ class BaseInstructionIO:
         """load instructions from a file"""
         raise NotImplementedError()
 
+
 class AssemblyIO(BaseInstructionIO):
     """assembly serialization"""
 
@@ -66,7 +72,7 @@ class AssemblyIO(BaseInstructionIO):
         return keystone.Ks(isa["keystone"]).asm(instructions)
 
     @staticmethod
-    def load(fp, isa, offset = 0):
+    def load(fp, isa, offset=0):
         """load assembly from a file based on an ISA"""
         # first, assemble
 
@@ -75,6 +81,7 @@ class AssemblyIO(BaseInstructionIO):
         s.seek(0, os.SEEK_SET)
         return MachineCodeIO.load(s, isa, offset)
 
+
 class MachineCodeIO(BaseInstructionIO):
     """machine code serialization"""
 
@@ -82,10 +89,9 @@ class MachineCodeIO(BaseInstructionIO):
     def dump(instructions, isa, fp):
         """dump machine code to a file"""
         return AssemblyIO.dump(b';'.join((i.bytes for i in instructions)), isa,
-            fp)
+                               fp)
 
     @staticmethod
-    def load(fp, isa, offset = 0):
+    def load(fp, isa, offset=0):
         """load machine code from a file based on an ISA"""
         return capstone.Cs(isa["capstone"]).disasm(fp.read(), offset)
-
