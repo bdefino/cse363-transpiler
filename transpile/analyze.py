@@ -23,16 +23,16 @@ class PEMagic(object):
 
 
 class CodeSlice:
-    def __init__(self, header_type, name, binary, addr, offset):
+    def __init__(self, header_type, name, binary_arr, addr, offset):
         self.header_type = header_type
         self.name = name
-        self.binary = binary
+        self.binary_arr = binary_arr
         self.addr = addr
         self.offset = offset
 
     @property
     def size(self):
-        return len(self.binary)
+        return len(self.binary_arr)
 
 
 class Binary:
