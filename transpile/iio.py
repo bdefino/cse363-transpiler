@@ -31,9 +31,8 @@ def pload(path, sections=None, text=False):
 
     with open(path, "rb") as fp:
         binary = analyze.Binary(fp.read())
-    sections = dict(sections) if isinstance(sections, dict) else {
-        ".text": None}  # is the name preceded with '.'????
-    ###Bryan: Yes, all sections headers begin with '.', program headers do not. You can look at .header_type of the CodeSlice object to diff the 2###
+    sections = dict(sections) if isinstance(sections, dict) \
+        else {".text": None}
     sections = {k: {"base": v} for k, v in sections.items()}
 
     for extent in binary.executable_sections:
@@ -41,10 +40,10 @@ def pload(path, sections=None, text=False):
             if isinstance(sections.get(extent.name, None), int) \
             else extent.base
         sections[extent.name] = {
-            "base": base
+            "base": base,
             "extent": extent,
-            # ISA?
-            "instructions": baseiio.load(io.StringIO(extent.raw), binary.GET ISA, base)
+            "instructions": baseiio.load(io.StringIO(extent.raw),
+                {"capstone": (binary.arch, binary.mode)}, base)
         }
     return filter(lambda n: isinstance(sections[n], dict), sections)
 
@@ -95,3 +94,4 @@ class MachineCodeIO(BaseInstructionIO):
     def load(fp, isa, offset=0):
         """load machine code from a file based on an ISA"""
         return capstone.Cs(isa["capstone"]).disasm(fp.read(), offset)
+
