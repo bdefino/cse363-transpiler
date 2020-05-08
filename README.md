@@ -33,6 +33,9 @@ See [the SDD](SDD.md).
 	- **test**
 
 # Sources
+- [Capstone](https://www.capstone-engine.org)
 - [ELF](https://wiki.osdev.org/ELF)
+- [Filebytes]()
+- [Keystone](https://keystone-engine.org)
 - [Netwide Assembler]()
 
