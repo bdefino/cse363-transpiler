@@ -1,13 +1,22 @@
 import capstone
 
-from . import iio, verbosity
+try:
+    from . import gadget, iio, verbosity
+except ImportError:
+    import os
+    import sys
+
+    sys.path.append(os.path.realpath(__file__))
+
+    import gadget
+    import iio
+    import verbosity
 
 class Transpiler:
     """transpilation base"""
 
     def __init__(self, target, all_permutations = False, recurse = False, verbosity = None):
-        self.target = target
-        self.instructions = []
+        self.target = target # `capstone.CsInsn`s
 
     def __call__(self, *objs):
         """
@@ -19,17 +28,21 @@ class Transpiler:
 
         objs = [iio.pload(o) for o in objs] # load all objects from disk
 
-        # load gadgets;
-        # working algorithm:
-        #     traverse in reverse order, with a "working" gadget: which is
-        #     reset to a single "ret" every time a "ret" is encountered)
+        if not len(set((o.isa for o in objs))) == 1:
+            raise TypeError("ISA mismatch (or no ISA)")
 
-        gadgets = {} # `{gadget: set(addresses of duplicates)}`
+        # populate gadgets
+
+        for o in objs:
+            objs[o]["gadgets"] = Gadgets(obj["instructions"])
+
+        # search for corresponding gadgets
+
+        ################################################################################
+
+        # build stack frames
+
         raise NotImplementedError()##################################################
-
-    def parse_instructions(self):
-      """"""
-      raise NotImplementedError()####################################################
 
 class Gadget:
   """Gadget Object"""

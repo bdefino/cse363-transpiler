@@ -1,3 +1,17 @@
-from . import iio, isa, transpile, verbosity
+try:
+    from . import analyze, gadget, iio, isa, transpile, verbosity
+except ImportError:
+    import os
+    import sys
+
+    sys.path.append(os.path.realpath(__file__))
+
+    import analyze
+    import gadget
+    import iio
+    import isa
+    import transpile
+    import verbosity
 
 __doc__ = "transpiler library"
+

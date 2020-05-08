@@ -3,7 +3,18 @@ import getopt
 import sys
 import traceback
 
-from . import iio, isa, transpile, verbosity
+try:
+    from . import iio, isa, transpile, verbosity
+except ImportError:
+    import os
+    import sys
+
+    sys.path.append(os.path.realpath(__file__))
+
+    import iio
+    import isa
+    import transpile
+    import verbosity
 
 '''
 Question:
@@ -31,7 +42,7 @@ OPTIONS
     -h
         print this text and exit
     -i
-        instruction set of the TARGET(x86, MIPS, etc...)
+        instruction set of the TARGET(x86-64, MIPS-32, etc...)
     -o FILE
         output the ROP payload to a file
         (defaults to STDOUT)
@@ -56,6 +67,8 @@ def help(name):
     print(__doc__ % name, file = sys.stderr)
 
 def main(argv):
+    from . import test
+    return test.test()##########################################################################
     all_permutations = False
     isas = None # required
     opath = '-'
@@ -70,7 +83,8 @@ def main(argv):
     opts, args = getopt.getopt("aho:rtv+", argv[1:])
 
     try:
-        target, sources = args[0], {k, v in (parse_source(a) for a in args[1:])}
+        target, sources = args[0], {k, v in (parse_source(a)
+            for a in args[1:])}
 
         if not sources:
             raise ValueError()
@@ -101,9 +115,11 @@ def main(argv):
         return 1
 
     try:
-        target = (iio.AssemblyIO if text else iio.MachineCodeIO).load(isa.parse(isas), target)
+        target = (iio.AssemblyIO if text else iio.MachineCodeIO).load(
+            isa.parse(isas), target)
         verbosity = verbosity.Verbosity()######################################################################
-        output = transpile.Transpiler(target, all_permutations, recurse, verbosity)(*objs)
+        output = transpile.Transpiler(target, all_permutations, recurse,
+            verbosity)(*objs)
 
         if opath == '-':
             iio.AssemblyIO.dump(output, sys.stdout)
@@ -136,3 +152,4 @@ def parse_source(s):
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv))
+

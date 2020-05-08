@@ -4,7 +4,15 @@ import keystone
 import os
 import re
 
-from . import analyze
+try:
+    from . import analyze
+except ImportError:
+    import os
+    import sys
+
+    sys.path.append(os.path.realpath(__file__))
+
+    import analyze
 
 __doc__ = "instruction de/serialization"
 
@@ -71,7 +79,7 @@ class AssemblyIO(BaseInstructionIO):
         return keystone.Ks(isa["keystone"]).asm(instructions)
 
     @staticmethod
-    def load(fp, isa, offset=0):
+    def load(fp, isa, offset = 0):
         """load assembly from a file based on an ISA"""
         # first, assemble
 
@@ -91,7 +99,7 @@ class MachineCodeIO(BaseInstructionIO):
                                fp)
 
     @staticmethod
-    def load(fp, isa, offset=0):
+    def load(fp, isa, offset = 0):
         """load machine code from a file based on an ISA"""
         return capstone.Cs(isa["capstone"]).disasm(fp.read(), offset)
 

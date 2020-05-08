@@ -1,7 +1,15 @@
 import capstone
 import keystone
 
-from . import analyze
+try:
+    from . import analyze
+except ImportError:
+    import os
+    import sys
+
+    sys.path.append(os.path.realpath(__file__))
+
+    import analyze
 
 __doc__ = "instruction set/architecture representation"
 
