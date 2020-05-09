@@ -114,7 +114,9 @@ class Transpiler:
         (expects "buf", "buflen", and "rop" in `kwargs`)
         """
 
-        if not len(set((o.isa for o in objs))) == 1:
+        print("first o:", list(objs[0]))
+        if not len(set((o["isa"] for o in objs))) == 1:
+            print("o: ", objs)
             raise ValueError("ISA mismatch (or no ISA)")
 
         for k, v in ("buf", "buflen", "rop"):

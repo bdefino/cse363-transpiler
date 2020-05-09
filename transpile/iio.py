@@ -50,7 +50,7 @@ def pload(path, sections=None, text=False):
         sections[extent.name] = {
             "base": base,
             "extent": extent,
-            "instructions": baseiio.load(io.StringIO(extent.raw),
+            "instructions": baseiio.load(io.BytesIO(extent.binary_arr),
                 {"capstone": (binary.arch, binary.mode)}, base)
         }
     return filter(lambda n: isinstance(sections[n], dict), sections)
@@ -101,5 +101,5 @@ class MachineCodeIO(BaseInstructionIO):
     @staticmethod
     def load(fp, isa, offset = 0):
         """load machine code from a file based on an ISA"""
-        return capstone.Cs(isa["capstone"]).disasm(fp.read(), offset)
+        return capstone.Cs(*isa["capstone"]).disasm(fp.read(), offset)
 
