@@ -164,3 +164,18 @@ class Transpiler:
         chain.append(Transpiler._first_matching_gadget("int 0x80", *gadgetss))
         return b"".join(chain)
 
+if __name__ == "__main__":
+    # localized: `os` and `sys` were already imported;
+    # generate an `mprotect` chain for x86-32 Linux
+
+    # load the object files
+
+    objs = [os.pload(p) for p in sys.argv[1:]]
+
+    # make the chain (`mprotect` will load the gadgets)
+
+    chain = Transpiler.mprotect(*objs, **{"buf": 0xEEEEEEEE, "buflen": 0xFFFFFFFF})
+
+    with os.fdopen(sys.stdout.fileno(), "wb") as fp:
+        fp.write(chain)
+
