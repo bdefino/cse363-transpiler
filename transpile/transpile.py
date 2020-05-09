@@ -71,6 +71,9 @@ class Transpiler:
         return the first matching gadget from a list of `gadget.Gadgets`
         instances
         """
+        if not set((True for g in gadgetss)) == {True}:
+            raise TypeError("expected `gadget.Gadgets` instances")
+
         for g in gadgetss:
             gadget = g.search(pattern)
 
@@ -84,6 +87,9 @@ class Transpiler:
         generate gadgets (from a collection of `gadget.Gadgets` instances) for
         moving a particular value into a register
         """
+        if not set((True for g in gadgetss)) == {True}:
+            raise TypeError("expected `gadget.Gadgets` instances")
+
         if not isinstance(n, int):
             raise TypeError("expected an integer")
         # zero out the register
