@@ -8,11 +8,11 @@ See [the SDD](SDD.md).
 - `analyze`
 	- ~~`Binary`~~
 	- ~~`CodeSlice`~~
-- `gadget`
+- `gadget` (Junming)
 	- `Gadgets`
 		- `search`
 			- regular expressions
-- `iio`
+- `iio` (Bailey)
 	- `AssemblyIO`
 	- `pload`
 	- `BaseInstructionIO`
@@ -21,7 +21,7 @@ See [the SDD](SDD.md).
 - `__init__`
 	- `__doc__`
 	- ~~imports~~
-- `isa`
+- `isa` (Bailey)
 	- `parse`
 - `__main__`
 	- `main`
@@ -35,6 +35,8 @@ See [the SDD](SDD.md).
 				should be specialized?)
 		- ~~`chain`~~
 		- `mprotect`
+			- primary option for register loading: `pop REG`
+				- secondary option: addition
 	- **test**
 
 # Sources
