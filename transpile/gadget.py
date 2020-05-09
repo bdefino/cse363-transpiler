@@ -61,17 +61,16 @@ class Gadgets:
                 print(gadget)
 
 
+if __name__ == "__main__":
+	code = b"\x4d\x39\x52\x54\x67\xc3\x5e\x72\x93\xe3\x73\x72\x5a\x5c\xc3\xc3"
 
-code = b"\x4d\x39\x52\x54\x67\xc3\x5e\x72\x93\xe3\x73\x72\x5a\x5c\xc3\xc3"
+	md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)
 
 
-md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)
-
-
-g = Gadgets(md.disasm(code, 0x0))
-g.find_gadgets()
-g.list_all()
-print('----------------')
-g.search('pop esp')
-print('----------------')
-print(g)
+	g = Gadgets(md.disasm(code, 0x0))
+	g.find_gadgets()
+	g.list_all()
+	print('----------------')
+	g.search('pop esp')
+	print('----------------')
+	print(g)

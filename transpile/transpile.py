@@ -114,7 +114,9 @@ class Transpiler:
         (expects "buf", "buflen", and "rop" in `kwargs`)
         """
 
-        if not len(set((o.isa for o in objs))) == 1:
+        print("first o:", list(objs[0]))
+        if not len(set((o["isa"] for o in objs))) == 1:
+            print("o: ", objs)
             raise ValueError("ISA mismatch (or no ISA)")
 
         for k, v in ("buf", "buflen", "rop"):
@@ -170,7 +172,7 @@ if __name__ == "__main__":
 
     # load the object files
 
-    objs = [os.pload(p) for p in sys.argv[1:]]
+    objs = [iio.pload(p) for p in sys.argv[1:]]
 
     # make the chain (`mprotect` will load the gadgets)
 
