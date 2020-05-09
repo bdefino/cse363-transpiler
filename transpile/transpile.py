@@ -16,6 +16,14 @@ except ImportError:
 class Transpiler:
     """transpilation base"""
 
+    CS_SYSCALLS = {
+        (capstone.CS_ARCH_X86, capstone.CS_MODE_32): {
+            "linux": {
+                "mprotect": 125
+            }
+        }
+    } # specified using `capstone` constants
+
     def __init__(self, target, all_permutations = False, recurse = False, verbosity = None):
         self.target = target # `capstone.CsInsn`s
 
@@ -48,14 +56,67 @@ class Transpiler:
     @staticmethod
     def chain(which = "mprotect", *objs, **kwargs):
         """establish a predefined ROP chain"""
-        if not chain == "mprotect":
-            raise ValueError("unsupported chain")
+        chains = {"mprotect": Transpiler.mprotect}
 
-        for k, v in ("buf", "rop"):
+        if not len(set((o.isa for o in objs))) == 1:
+            raise ValueError("ISA mismatch (or no ISA)")
+
+        if which in chains:
+            return chains[which](*objs, **kwargs)
+        raise ValueError("unsupported chain \"%s\"" % which)
+
+    @staticmethod
+    def _first_matching_gadget(pattern, *gadgetss):
+        """
+        return the first matching gadget from a list of `gadget.Gadgets`
+        instances
+        """
+        for g in gadgetss:
+            gadget = g.search(pattern)
+
+            if g is not None:
+                return gadget
+        raise ValueError("no `%s` gadget" % pattern)
+
+    @staticmethod
+    def _mov_reg_n(reg, n = 0, *gadgetss):
+        """
+        generate gadgets (from a collection of `gadget.Gadgets` instances) for
+        moving a particular value into a register
+        """
+        if not isinstance(n, int):
+            raise TypeError("expected an integer")
+        # zero out the register
+
+        yield Transpiler._first_matching_gadget("xor %s, %s" % (reg, reg),
+            *gadgetss)
+
+        # fill the register
+
+        gadget = Transpiler._first_matching_gadget(
+            ("dec %s" if n < 0 else "inc %s") % reg, *gadgetss)
+        increment = -1 if n < 0 else 1
+
+        while n:
+            yield gadget
+            n -= increment
+
+    @staticmethod
+    def mprotect(*objs, **kwargs):
+        """
+        generate an `mprotect` ROP chain
+        (expects "buf", "buflen", and "rop" in `kwargs`)
+        """
+
+        if not len(set((o.isa for o in objs))) == 1:
+            raise ValueError("ISA mismatch (or no ISA)")
+
+        for k, v in ("buf", "buflen", "rop"):
             if not "buf" in kwargs:
                 raise KeyError("expected \"%s\" in `kwargs`" % k)
             elif not isinstance(v, int):
-                raise KeyError("expected `kwargs[\"%s\"]` to be an integer")
+                raise KeyError(
+                    "expected `kwargs[\"%s\"]` to be a positive integer" % k)
 
         # load all objects
 
@@ -73,57 +134,28 @@ class Transpiler:
 
         chain = []
 
-        # `mov edx, 0x0007`
+        # `mov edx, (PROT_EXEC | PROT_READ | PROT_WRITE)`
 
         chain += [g for g in Transpiler._mov_reg_n("edx", 7, *gadgetss)]
 
-        # `mov ecx, (ROP - BUF)`
+        # `mov ecx, (BUFLEN)`
 
         chain += [g for g in Transpiler._mov_reg_n("ecx",
-            kwargs["rop"] - kwargs["buf"], *gadgetss)]
+            kwargs["buflen"], *gadgetss)]
 
-        ##############
-        raise NotImplementedError()##################################################
+        # `mov ebx, (ROP)`
 
-    @staticmethod
-    def _first_matching_gadget(pattern, *gadgetss):
-        """
-        return the first matching gadget from a list of `gadget.Gadgets`
-        instances
-        """
-        for g in gadgetss:
-            gadget = g.search(pattern)
+        chain += [g for g in Transpiler._mov_reg_n("ebx", kwargs["rop"],
+            *gadgetss)]
 
-            if g is not None:
-                return gadget
+        # `mov eax, (MPROTECT)`
 
-    @staticmethod
-    def _mov_reg_n(reg, n = 0, *gadgetss):
-        """
-        generate gadgets (from a collection of `gadget.Gadgets` instances) for
-        moving a particular value into a register
-        """
-        if not isinstance(n, int):
-            raise TypeError("expected an integer")
-        # zero out the register
+        chain += [g for g in Transpiler._mov_reg_n("eax",
+            Transpiler.SYSCALLS[objs[0].isa["capstone"]]["linux"]["mprotect"],
+            *gadgetss)]
 
-        pattern = "xor %s, %s" % (reg, reg)
-        xor_reg_reg = Transpiler._first_matching_gadget(pattern, *gadgetss)
+        # `int 0x80`
 
-        if xor_reg_reg is None:
-            raise ValueError("no `%s` gadget" % pattern)
-        yield xor_reg_reg
-
-        # fill the register
-
-        increment = 1 if n > 0 else -1
-        pattern = "inc %s" % reg if n > 0 else "dec %s"
-        gadget = Transpiler._first_matching_gadget(pattern, *gadgetss)
-
-        if gadget is None:
-            raise ValueError("no `%s` gadget" % pattern)
-
-        while n:
-            yield gadget
-            n -= increment
+        chain.append(Transpiler._first_matching_gadget("int 0x80", *gadgetss))
+        return b"".join(chain)
 
