@@ -10,6 +10,8 @@ See [the SDD](SDD.md).
 	- ~~`CodeSlice`~~
 - `gadget`
 	- `Gadgets`
+		- `search`
+			- regular expressions
 - `iio`
 	- `AssemblyIO`
 	- `pload`
@@ -23,6 +25,7 @@ See [the SDD](SDD.md).
 	- `parse`
 - `__main__`
 	- `main`
+		- adapt to `mprotect` interface
 - `transpile`
 	- `Transpiler`
 		- `__call__`
@@ -30,6 +33,8 @@ See [the SDD](SDD.md).
 			- construct frames
 			- function arguments (maybe the input/output format
 				should be specialized?)
+		- ~~`chain`~~
+		- `mprotect`
 	- **test**
 
 # Sources
