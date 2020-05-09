@@ -136,23 +136,22 @@ class Transpiler:
 
         # `mov edx, (PROT_EXEC | PROT_READ | PROT_WRITE)`
 
-        chain += [g for g in Transpiler._mov_reg_n("edx", 7, *gadgetss)]
+        chain += list(Transpiler._mov_reg_n("edx", 7, *gadgetss))
 
         # `mov ecx, (BUFLEN)`
 
-        chain += [g for g in Transpiler._mov_reg_n("ecx",
-            kwargs["buflen"], *gadgetss)]
+        chain += list(Transpiler._mov_reg_n("ecx", kwargs["buflen"],
+            *gadgetss))
 
         # `mov ebx, (ROP)`
 
-        chain += [g for g in Transpiler._mov_reg_n("ebx", kwargs["rop"],
-            *gadgetss)]
+        chain += list(Transpiler._mov_reg_n("ebx", kwargs["rop"], *gadgetss))
 
         # `mov eax, (MPROTECT)`
 
-        chain += [g for g in Transpiler._mov_reg_n("eax",
+        chain += list(Transpiler._mov_reg_n("eax",
             Transpiler.SYSCALLS[objs[0].isa["capstone"]]["linux"]["mprotect"],
-            *gadgetss)]
+            *gadgetss))
 
         # `int 0x80`
 
