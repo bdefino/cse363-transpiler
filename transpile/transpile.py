@@ -63,21 +63,26 @@ class Transpiler:
 
         # load all gadgets
 
-        for o in objs:
-            objs[o]["gadgets"] = gadget.Gadgets(o["instructions"])
-
-        # load `xor edx, edx`
-
-        # load `mov edx, 0x0007`
-
-        mov_edx_0x0007 = None
+        gadgetss = []
 
         for o in objs:
-            gadgets = objs["gadgets"].search("^$")
+            gadgetss.append(gadget.Gadgets(o["instructions"]))
+            o["gadgets"] = gadgetss[-1]
 
-            if not gadgets:
-                continue
-            mov_edx_0x0007
+        # create chain
+
+        chain = []
+
+        # `mov edx, 0x0007`
+
+        chain += [g for g in Transpiler._mov_reg_n("edx", 7, *gadgetss)]
+
+        # `mov ecx, (ROP - BUF)`
+
+        chain += [g for g in Transpiler._mov_reg_n("ecx",
+            kwargs["rop"] - kwargs["buf"], *gadgetss)]
+
+        ##############
         raise NotImplementedError()##################################################
 
     @staticmethod
