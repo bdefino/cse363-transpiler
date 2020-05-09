@@ -12,6 +12,7 @@ See [the SDD](SDD.md).
 	- `Gadgets`
 		- `search`
 			- regular expressions
+			- return `None` if unfound
 - `iio` (Bailey)
 	- `AssemblyIO`
 	- `pload`
@@ -34,9 +35,10 @@ See [the SDD](SDD.md).
 			- function arguments (maybe the input/output format
 				should be specialized?)
 		- ~~`chain`~~
-		- `mprotect`
+		- `_mov_reg_n` (Bryan)
 			- primary option for register loading: `pop REG`
 				- secondary option: addition
+		- `mprotect`
 	- **test**
 
 # Sources
