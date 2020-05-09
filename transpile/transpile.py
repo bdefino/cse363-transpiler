@@ -170,7 +170,7 @@ if __name__ == "__main__":
 
     # load the object files
 
-    objs = [os.pload(p) for p in sys.argv[1:]]
+    objs = [iio.pload(p) for p in sys.argv[1:]]
 
     # make the chain (`mprotect` will load the gadgets)
 

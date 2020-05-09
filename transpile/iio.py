@@ -46,7 +46,7 @@ def pload(path, sections=None, text=False):
     for extent in binary.executable_sections:
         base = sections[extent.name] \
             if isinstance(sections.get(extent.name, None), int) \
-            else extent.base
+            else extent.addr
         sections[extent.name] = {
             "base": base,
             "extent": extent,
