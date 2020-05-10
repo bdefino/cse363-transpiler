@@ -13,7 +13,7 @@ See [the SDD](SDD.md).
 		- ~~`search`~~
 			- ~~regular expressions~~
 			- ~~return `None` if unfound~~
-- `iio` (Bailey)
+- `iio`
 	- `AssemblyIO`
 	- `pload`
 	- `BaseInstructionIO`
@@ -22,8 +22,10 @@ See [the SDD](SDD.md).
 - `__init__`
 	- `__doc__`
 	- ~~imports~~
-- `isa` (Bailey)
-	- `parse`
+- `isa`
+	- ~~`binary`~~
+	- ~~`correlate`~~
+	- ~~`parse`~~
 - `__main__`
 	- `main`
 		- adapt to `mprotect` interface
@@ -35,9 +37,9 @@ See [the SDD](SDD.md).
 			- function arguments (maybe the input/output format
 				should be specialized?)
 		- ~~`chain`~~
-		- `_mov_reg_n` (Bryan)
-			- primary option for register loading: `pop REG`
-				- secondary option: addition
+		- `_mov_reg_n`
+			- ~~primary option for register loading: `pop REG`~~
+				~~- secondary option: addition~~
 		- `mprotect`
 	- **test**
 
