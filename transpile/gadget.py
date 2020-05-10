@@ -55,19 +55,20 @@ class Gadgets:
 
     def search(self, pattern):
         pattern = " ; ".join(i.strip() for i in pattern.split(';'))
-        s = ''
+        glist = {}
         print("target pattern:", pattern)
         
         for k in self.gadgets.keys():
-            gadget = self.__tostring(k)
-            if re.search(pattern, gadget):
-                s += gadget + '\n'
+            addr = self.gadgets[k][0]
+            g = self.__tostring(k)
+            if re.search(pattern, g):
+                print(g)
+                glist[addr] = g
         
-        if s != '':
-            print("gadgets: ", s, sep='\n')
-            return s
+        if glist != {}:
+            return glist
         else:
-            print("Gadget not found")
+            print("gadget not found")
             return None
 
 
@@ -80,4 +81,4 @@ if __name__ == "__main__":
         g.find_gadgets()
         print(g)
         print('----------------')
-        g.search('pop ...; ret')
+        print(g.search('pop ...; ret'))
