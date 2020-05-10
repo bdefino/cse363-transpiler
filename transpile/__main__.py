@@ -146,12 +146,7 @@ def main(argv):
         return 1
 
     try:
-        if not chain:
-            target = (iio.AssemblyIO if text else iio.MachineCodeIO).load(
-                isa.parse(isas), target)
         verbosity = verbosity.Verbosity()######################################################################
-        transpiler = transpile.Transpiler(target, all_permutations, recurse,
-            verbosity)
 
         if chain:
             output = transpile.Transpiler.chain(target, buf = buf,
@@ -159,13 +154,15 @@ def main(argv):
         else:
             target = (iio.AssemblyIO if text else iio.MachineCodeIO).load(
                 isa.parse(isas), target)
-            output = transpiler.
+            output = transpiler.Transpiler(target, all_permutations, recurse,
+                verbosity)
 
         if opath == '-':
-            with open(sys.stdout, 
+            with os.fdopen(sys.stdout.fileno(), "wb") as fp:
+                fp.write(fp)
         else:
             with open(opath, "wb") as fp:
-                output.dump(fp)
+                fp.write(output)
     except Exception as e:
         traceback.format_exc(*e)
         return 1
