@@ -5,7 +5,7 @@ import os
 import re
 
 try:
-    from . import analyze
+    from . import analyze, isa
 except ImportError:
     import os
     import sys
@@ -13,6 +13,7 @@ except ImportError:
     sys.path.append(os.path.realpath(__file__))
 
     import analyze
+    import isa
 
 __doc__ = "instruction de/serialization"
 
@@ -39,6 +40,7 @@ def pload(path, sections=None, text=False):
 
     with open(path, "rb") as fp:
         binary = analyze.Binary(fp.read())
+    _isa = isa.correlate({"capstone": (binary.arch, binary.mode)})
     sections = dict(sections) if isinstance(sections, dict) \
         else {".text": None}
     sections = {k: {"base": v} for k, v in sections.items()}
@@ -50,10 +52,11 @@ def pload(path, sections=None, text=False):
         sections[extent.name] = {
             "base": base,
             "extent": extent,
-            "instructions": baseiio.load(io.BytesIO(extent.binary_arr),
-                {"capstone": (binary.arch, binary.mode)}, base)
+            "instructions": baseiio.load(io.BytesIO(extent.binary_arr), _isa,
+                base),
+            "isa": _isa
         }
-    return filter(lambda n: isinstance(sections[n], dict), sections)
+    return list(filter(lambda n: isinstance(sections[n], dict), sections))
 
 
 class BaseInstructionIO:

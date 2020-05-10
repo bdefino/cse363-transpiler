@@ -59,6 +59,7 @@ def correlate(isa):
             isa["capstone"][1] = capstone.CS_MODE_64
         else:
             raise ValueError("unsupported mode")
+    return isa
 
 def parse(s):
     """parse an ISA string into a capstone `(arch, mode)`"""
