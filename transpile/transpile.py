@@ -16,14 +16,6 @@ except ImportError:
 class Transpiler:
     """transpilation base"""
 
-    CS_SYSCALLS = {
-        (capstone.CS_ARCH_X86, capstone.CS_MODE_32): {
-            "linux": {
-                "mprotect": 125
-            }
-        }
-    } # specified using `capstone` constants
-
     def __init__(self, target, all_permutations = False, recurse = False, verbosity = None):
         self.target = target # `capstone.CsInsn`s
 
@@ -114,9 +106,7 @@ class Transpiler:
         (expects "buf", "buflen", and "rop" in `kwargs`)
         """
 
-        print("first o:", list(objs[0]))
         if not len(set((o["isa"] for o in objs))) == 1:
-            print("o: ", objs)
             raise ValueError("ISA mismatch (or no ISA)")
 
         for k, v in ("buf", "buflen", "rop"):
@@ -126,17 +116,11 @@ class Transpiler:
                 raise KeyError(
                     "expected `kwargs[\"%s\"]` to be a positive integer" % k)
 
-        # load all objects
-
-        objs = [iio.pload(o) for o in objs]
-
         # load all gadgets
 
-        gadgetss = []
-
         for o in objs:
-            gadgetss.append(gadget.Gadgets(o["instructions"]))
-            o["gadgets"] = gadgetss[-1]
+            o["gadgets"] = gadget.Gadgets(o["instructions"]))
+        gadgetss = [o["gadgets"] for o in objs]
 
         # create chain
 
@@ -170,13 +154,8 @@ if __name__ == "__main__":
     # localized: `os` and `sys` were already imported;
     # generate an `mprotect` chain for x86-32 Linux
 
-    # load the object files
-
-    objs = [iio.pload(p) for p in sys.argv[1:]]
-
-    # make the chain (`mprotect` will load the gadgets)
-
-    chain = Transpiler.mprotect(*objs, **{"buf": 0xEEEEEEEE, "buflen": 0xFFFFFFFF})
+    chain = Transpiler.chain("mprotect", buf = 0xEEEEEEEE, buflen = 0xFFFFFFFF,
+        rop = -0x1, *[iio.pload(p) for p in sys.argv[1]])
 
     with os.fdopen(sys.stdout.fileno(), "wb") as fp:
         fp.write(chain)
