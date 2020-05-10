@@ -1,5 +1,6 @@
 import capstone
 import io
+import struct
 
 try:
     from . import gadget, iio, verbosity
@@ -13,11 +14,12 @@ except ImportError:
     import iio
     import verbosity
 
+
 class Transpiler:
     """transpilation base"""
 
-    def __init__(self, target, all_permutations = False, recurse = False, verbosity = None):
-        self.target = target # `capstone.CsInsn`s
+    def __init__(self, target, all_permutations=False, recurse=False, verbosity=None):
+        self.target = target  # `capstone.CsInsn`s
 
     def __call__(self, *objs):
         """
@@ -27,7 +29,7 @@ class Transpiler:
         """
         # load objects
 
-        objs = [iio.pload(o) for o in objs] # load all objects from disk
+        objs = [iio.pload(o) for o in objs]  # load all objects from disk
 
         if not len(set((o.isa for o in objs))) == 1:
             raise TypeError("ISA mismatch (or no ISA)")
@@ -43,10 +45,10 @@ class Transpiler:
 
         # build stack frames
 
-        raise NotImplementedError()##################################################
+        raise NotImplementedError()
 
     @staticmethod
-    def chain(which = "mprotect", *objs, **kwargs):
+    def chain(which="mprotect", *objs, **kwargs):
         """establish a predefined ROP chain"""
         chains = {"mprotect": Transpiler.mprotect}
 
@@ -74,7 +76,7 @@ class Transpiler:
         raise ValueError("no `%s` gadget" % pattern)
 
     @staticmethod
-    def _mov_reg_n(reg, n = 0, *gadgetss):
+    def _mov_reg_n(reg, n=0, *gadgetss):
         """
         generate gadgets (from a collection of `gadget.Gadgets` instances) for
         moving a particular value into a register
@@ -87,7 +89,7 @@ class Transpiler:
         # zero out the register
 
         yield Transpiler._first_matching_gadget("xor %s, %s" % (reg, reg),
-            *gadgetss)
+                                                *gadgetss)
 
         # fill the register
 
@@ -98,6 +100,25 @@ class Transpiler:
         while n:
             yield gadget
             n -= increment
+
+    @staticmethod
+    def _pop_reg(reg, val, *gadgetss):
+        if not set((True for g in gadgetss)) == {True}:
+            raise TypeError("expected `gadget.Gadgets` instances")
+
+        # convert val to bytes
+        ##################################################################
+        # need endianess; default little x86
+
+        b_val = struct.pack("<I", val)
+
+        # find reg
+        gadget = Transpiler._first_matching_gadget(
+            "pop %s" % reg, *gadgetss)
+
+        # connect chain
+
+        return [gadget, b_val]
 
     @staticmethod
     def mprotect(*objs, **kwargs):
@@ -119,21 +140,39 @@ class Transpiler:
         # load all gadgets
 
         for o in objs:
-            o["gadgets"] = gadget.Gadgets(o["instructions"]))
+            o["gadgets"] = gadget.Gadgets(o["instructions"])
         gadgetss = [o["gadgets"] for o in objs]
 
         # create chain
 
         chain = []
+        ############################
+
+        # `pop eax`
+        chain += Transpiler._pop_reg("eax",
+                                     Transpiler.SYSCALLS[objs[0].isa["capstone"]]["linux"]["mprotect"], *gadgetss)
+
+        # `pop ebx`
+        chain += Transpiler._pop_reg("ebx",
+                                     kwargs["rop"], *gadgetss)
+
+        # `pop ecx`
+        chain += Transpiler._pop_reg("ecx",
+                                     kwargs["buflen"], *gadgetss)
+
+        # `pop edx`
+        chain += Transpiler._pop_reg("edx",
+                                     7, *gadgetss)
+
+        ############################
 
         # `mov edx, (PROT_EXEC | PROT_READ | PROT_WRITE)`
-
         chain += list(Transpiler._mov_reg_n("edx", 7, *gadgetss))
 
         # `mov ecx, (BUFLEN)`
 
         chain += list(Transpiler._mov_reg_n("ecx", kwargs["buflen"],
-            *gadgetss))
+                                            *gadgetss))
 
         # `mov ebx, (ROP)`
 
@@ -142,21 +181,22 @@ class Transpiler:
         # `mov eax, (MPROTECT)`
 
         chain += list(Transpiler._mov_reg_n("eax",
-            Transpiler.SYSCALLS[objs[0].isa["capstone"]]["linux"]["mprotect"],
-            *gadgetss))
+                                            Transpiler.SYSCALLS[objs[0].isa["capstone"]
+                                                                ]["linux"]["mprotect"],
+                                            *gadgetss))
 
         # `int 0x80`
 
         chain.append(Transpiler._first_matching_gadget("int 0x80", *gadgetss))
         return b"".join(chain)
 
+
 if __name__ == "__main__":
     # localized: `os` and `sys` were already imported;
     # generate an `mprotect` chain for x86-32 Linux
 
-    chain = Transpiler.chain("mprotect", buf = 0xEEEEEEEE, buflen = 0xFFFFFFFF,
-        rop = -0x1, *[iio.pload(p) for p in sys.argv[1]])
+    chain = Transpiler.chain("mprotect", buf=0xEEEEEEEE, buflen=0xFFFFFFFF,
+                             rop=-0x1, *[iio.pload(p) for p in sys.argv[1]])
 
     with os.fdopen(sys.stdout.fileno(), "wb") as fp:
         fp.write(chain)
-
