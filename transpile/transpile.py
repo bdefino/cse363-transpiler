@@ -31,8 +31,8 @@ class Transpiler:
 
         objs = [iio.pload(o) for o in objs]  # load all objects from disk
 
-        if not len(set((o.isa for o in objs))) == 1:
-            raise TypeError("ISA mismatch (or no ISA)")
+        if not all(([o.isa] == objs[:1] for o in objs[1:]))):
+            raise TypeError("ISA mismatch")
 
         # populate gadgets
 
@@ -52,8 +52,8 @@ class Transpiler:
         """establish a predefined ROP chain"""
         chains = {"mprotect": Transpiler.mprotect}
 
-        if not len(set((o.isa for o in objs))) == 1:
-            raise ValueError("ISA mismatch (or no ISA)")
+        if not all(([o.isa] == objs[:1] for o in objs[1:]))):
+            raise TypeError("ISA mismatch")
 
         if which in chains:
             return chains[which](*objs, **kwargs)
@@ -126,10 +126,9 @@ class Transpiler:
         generate an `mprotect` ROP chain
         (expects "buf", "buflen", and "rop" in `kwargs`)
         """
-
-        if not len(set((o["isa"] for o in objs))) == 1:
-            raise ValueError("ISA mismatch (or no ISA)")
-
+        if not all(([o.isa] == objs[:1] for o in objs[1:]))):
+            raise TypeError("ISA mismatch")
+        #########################################################################################per-ISA discrimination
         for k, v in ("buf", "buflen", "rop"):
             if not "buf" in kwargs:
                 raise KeyError("expected \"%s\" in `kwargs`" % k)
@@ -148,42 +147,39 @@ class Transpiler:
         chain = []
         ############################
 
-        # `pop eax`
-        chain += Transpiler._pop_reg("eax",
-                                     Transpiler.SYSCALLS[objs[0].isa["capstone"]]["linux"]["mprotect"], *gadgetss)
+        try:
+            # `pop eax`
+            chain += Transpiler._pop_reg("eax", 125, *gadgetss)
+        except ValueError:
+            # `mov eax, (MPROTECT)`
 
-        # `pop ebx`
-        chain += Transpiler._pop_reg("ebx",
-                                     kwargs["rop"], *gadgetss)
+            chain += list(Transpiler._mov_reg_n("eax", 125, *gadgetss))
 
-        # `pop ecx`
-        chain += Transpiler._pop_reg("ecx",
-                                     kwargs["buflen"], *gadgetss)
+        try:
+            # `pop ebx`
+            chain += Transpiler._pop_reg("ebx", kwargs["rop"], *gadgetss)
+        except ValueError:
+            # `mov ebx, (ROP)`
 
-        # `pop edx`
-        chain += Transpiler._pop_reg("edx",
-                                     7, *gadgetss)
+            chain += list(Transpiler._mov_reg_n("ebx", kwargs["rop"],
+                *gadgetss))
 
-        ############################
+        try:
+            # `pop ecx`
+            chain += Transpiler._pop_reg("ecx", kwargs["buflen"], *gadgetss)
+        except ValueError:
+            # `mov ecx, (BUFLEN)`
 
-        # `mov edx, (PROT_EXEC | PROT_READ | PROT_WRITE)`
-        chain += list(Transpiler._mov_reg_n("edx", 7, *gadgetss))
-
-        # `mov ecx, (BUFLEN)`
-
-        chain += list(Transpiler._mov_reg_n("ecx", kwargs["buflen"],
+            chain += list(Transpiler._mov_reg_n("ecx", kwargs["buflen"],
                                             *gadgetss))
 
-        # `mov ebx, (ROP)`
+        try:
+            # `pop edx`
+            chain += Transpiler._pop_reg("edx", 7, *gadgetss)
+        except ValueError:
+            # `mov edx, (PROT_EXEC | PROT_READ | PROT_WRITE)`
 
-        chain += list(Transpiler._mov_reg_n("ebx", kwargs["rop"], *gadgetss))
-
-        # `mov eax, (MPROTECT)`
-
-        chain += list(Transpiler._mov_reg_n("eax",
-                                            Transpiler.SYSCALLS[objs[0].isa["capstone"]
-                                                                ]["linux"]["mprotect"],
-                                            *gadgetss))
+            chain += list(Transpiler._mov_reg_n("edx", 7, *gadgetss))
 
         # `int 0x80`
 

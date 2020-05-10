@@ -109,7 +109,7 @@ def main(argv):
         elif k == "-v":
             verbosity += 1
 
-    if not isa:
+    if not isas:
         print("Empty ISA.", file = sys.stderr)
         help(argv[0])
         return 1
