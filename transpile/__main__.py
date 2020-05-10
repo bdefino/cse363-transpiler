@@ -53,6 +53,8 @@ OPTIONS
     -o FILE
         output the ROP payload to a file
         (defaults to STDOUT)
+    -p ADDR
+        where the ROP payload will be located on the victim's machine
     -r
         recurse into dynamic links
 
@@ -88,6 +90,7 @@ def main(argv):
     isas = None # required
     opath = '-'
     recurse = False
+    rop = None
     sources = {} # `{path: {segment: base address}}`
     target = None
     text = False
@@ -95,7 +98,7 @@ def main(argv):
 
     # parse arguments
 
-    opts, args = getopt.getopt("ab:chl:o:rtv+", argv[1:])
+    opts, args = getopt.getopt("ab:chl:o:p:rtv+", argv[1:])
 
     try:
         target, sources = args[0], {k, v in (parse_source(a)
@@ -133,6 +136,13 @@ def main(argv):
                 return 1
         elif k == "-o":
             opath = v
+        elif k == "-p":
+            try:
+                rop = int(v)
+            except ValueError:
+                print("Invalid address.", file = sys.stderr)
+                help(argv[0])
+                return 1
         elif k == "-r":
             recurse = True
         elif k == "-t":
@@ -150,7 +160,7 @@ def main(argv):
 
         if chain:
             output = transpile.Transpiler.chain(target, buf = buf,
-                buflen = buflen, *objs)
+                buflen = buflen, rop = rop, *objs)
         else:
             target = (iio.AssemblyIO if text else iio.MachineCodeIO).load(
                 isa.parse(isas), target)
