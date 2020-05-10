@@ -99,3 +99,11 @@ def parse(s):
         output["keystone"][1] = keystone.KS_MODE_64
     return {k: tuple(v) for k, v in output.items()}
 
+if __name__ == "__main__":
+    # test
+
+    isa = parse("x84-64")
+    print(isa)
+    del isa["keystone"]
+    print(correlate(isa))
+
