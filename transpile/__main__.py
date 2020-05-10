@@ -39,10 +39,17 @@ OPTIONS
     -a
         explore all possible gadgets
         (via DAG comparisons)
+    -b ADDR
+        buffer address (contextual)
+    -c
+        TARGET is a chain
+        (takes precedence over `-t`)
     -h
         print this text and exit
     -i
         instruction set of the TARGET(x86-64, MIPS-32, etc...)
+    -l LENGTH
+        buffer length (contextual)
     -o FILE
         output the ROP payload to a file
         (defaults to STDOUT)
@@ -61,7 +68,12 @@ SECTION
 SOURCE
     source file (`.dll`, ELF, `.o`, PE, `.so`, etc.)
 TARGET
-    the desired behavior (an assembly file of shell code)"""
+    the desired behavior (an assembly file of shell code)
+
+    if `-c` is also provided, this is one of the following chain names:
+        `mprotect`
+            expects `-b` and `-l` to represent the secondary payload
+        (more to come)"""
 
 def help(name):
     print(__doc__ % name, file = sys.stderr)
@@ -70,6 +82,9 @@ def main(argv):
     from . import test
     return test.test()##########################################################################
     all_permutations = False
+    buf = None
+    buflen = None
+    chain = False
     isas = None # required
     opath = '-'
     recurse = False
@@ -80,7 +95,7 @@ def main(argv):
 
     # parse arguments
 
-    opts, args = getopt.getopt("aho:rtv+", argv[1:])
+    opts, args = getopt.getopt("ab:chl:o:rtv+", argv[1:])
 
     try:
         target, sources = args[0], {k, v in (parse_source(a)
@@ -95,11 +110,27 @@ def main(argv):
     for k, v in opts:
         if k == "-a":
             all_permutations = True
+        elif k == "-b":
+            try:
+                buf = int(v)
+            except ValueError:
+                print("Invalid address.", file = sys.stderr)
+                help(argv[0])
+                return 1
+        elif k == "-c":
+            chain = True
         elif k == "-h":
             help(argv[0])
             return 0
         elif k == "-i":
             isas = v
+        elif k == "-l":
+            try:
+                buflen = int(v)
+            except ValueError:
+                print("Invalid length.", file = sys.stderr)
+                help(argv[0])
+                return 1
         elif k == "-o":
             opath = v
         elif k == "-r":
@@ -115,14 +146,23 @@ def main(argv):
         return 1
 
     try:
-        target = (iio.AssemblyIO if text else iio.MachineCodeIO).load(
-            isa.parse(isas), target)
+        if not chain:
+            target = (iio.AssemblyIO if text else iio.MachineCodeIO).load(
+                isa.parse(isas), target)
         verbosity = verbosity.Verbosity()######################################################################
-        output = transpile.Transpiler(target, all_permutations, recurse,
-            verbosity)(*objs)
+        transpiler = transpile.Transpiler(target, all_permutations, recurse,
+            verbosity)
+
+        if chain:
+            output = transpile.Transpiler.chain(target, buf = buf,
+                buflen = buflen, *objs)
+        else:
+            target = (iio.AssemblyIO if text else iio.MachineCodeIO).load(
+                isa.parse(isas), target)
+            output = transpiler.
 
         if opath == '-':
-            iio.AssemblyIO.dump(output, sys.stdout)
+            with open(sys.stdout, 
         else:
             with open(opath, "wb") as fp:
                 output.dump(fp)
