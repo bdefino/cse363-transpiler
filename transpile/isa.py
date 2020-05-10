@@ -70,13 +70,13 @@ def parse(s):
     s = s.lower()
 
     for c in s:
-      if c.isspecial():
-          components.append("")
-          continue
-      components[-1] += c
+        if not c.isalpha() and not c.isdigit():
+            components.append("")
+            continue
+        components[-1] += c
 
     try:
-        arch, mode = filter(components)
+        arch, mode = list(filter(None, components))
     except ValueError:
         raise ValueError("invalid ISA")
 
