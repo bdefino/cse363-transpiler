@@ -1,5 +1,5 @@
-#!/bin/env python3
 import capstone
+import re
 
 
 class Gadgets:
@@ -17,10 +17,10 @@ class Gadgets:
     def __str__(self):
         s = ''
         for k in self.gadgets.keys():
-            s += self.tostring(k) + '\n'
+            s += self.__tostring(k) + '\n'
         return s
 
-    def tostring(self, ret):
+    def __tostring(self, ret):
         v = self.gadgets[ret]
         s = "0x" + str(v[0]) + '\t'
         s += " ; ".join(v[1:])
@@ -49,28 +49,35 @@ class Gadgets:
                 if len(self.gadgets[g_point]) > self.depth:
                     isgadget = False    #end gadget chain
 
-    def list_all(self):
+    def __list_all(self):
         for i, j in self.gadgets.items():
             print("ret addr: 0x%x\t" %i, "gadgets:", j)
 
     def search(self, pattern):
-        print("target:", pattern)
+        pattern = " ; ".join(i.strip() for i in pattern.split(';'))
+        s = ''
+        print("target pattern:", pattern)
+        
         for k in self.gadgets.keys():
-            gadget = self.tostring(k)
-            if pattern in gadget:
-                print(gadget)
+            gadget = self.__tostring(k)
+            if re.search(pattern, gadget):
+                s += gadget + '\n'
+        
+        if s != '':
+            print("gadgets: ", s, sep='\n')
+            return s
+        else:
+            print("Gadget not found")
+            return None
 
 
 if __name__ == "__main__":
-	code = b"\x4d\x39\x52\x54\x67\xc3\x5e\x72\x93\xe3\x73\x72\x5a\x5c\xc3\xc3"
+        code = b"\x4d\x39\x52\x54\x67\xc3\x5e\x72\x93\xe3\x73\x72\x5a\x5c\xc3\x5a\xc3"
+        md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)
 
-	md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)
 
-
-	g = Gadgets(md.disasm(code, 0x0))
-	g.find_gadgets()
-	g.list_all()
-	print('----------------')
-	g.search('pop esp')
-	print('----------------')
-	print(g)
+        g = Gadgets(md.disasm(code, 0x0))
+        g.find_gadgets()
+        print(g)
+        print('----------------')
+        g.search('pop ...; ret')
