@@ -34,6 +34,7 @@ See [the SDD](SDD.md).
 				- `mprotect` sub-option
 - `transpile`
 	- `Transpiler`
+		- rethink `__init__` interface (move args to `__call__`?)
 		- `__call__`
 			- obtain gadgets
 			- construct frames
