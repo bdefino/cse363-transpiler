@@ -79,7 +79,9 @@ class AssemblyIO(BaseInstructionIO):
     @staticmethod
     def dump(instructions, isa, fp):
         """dump assembly to a file"""
-        return keystone.Ks(isa["keystone"]).asm(instructions)
+        return keystone.Ks(isa["keystone"]["arch"],
+            isa["keystone"]["endianness"] + isa["keystone"]["endianness"]).asm(
+                instructions)
 
     @staticmethod
     def load(fp, isa, offset = 0):
@@ -104,5 +106,7 @@ class MachineCodeIO(BaseInstructionIO):
     @staticmethod
     def load(fp, isa, offset = 0):
         """load machine code from a file based on an ISA"""
-        return capstone.Cs(*isa["capstone"]).disasm(fp.read(), offset)
+        return capstone.Cs(isa["capstone"]["arch"],
+            isa["capstone"]["endianness"] + isa["capstone"]["mode"]).disasm(
+                fp.read(), offset)
 

@@ -14,74 +14,89 @@ except ImportError:
 __doc__ = "instruction set/architecture representation"
 
 def binary(binary):
-    """extract an appropriate mode from a `Binary`"""
+    """extract an appropriate ISA from a `Binary`"""
     if not isinstance(binary, analyze.Binary):
         raise TypeError("expected an `analyze.Binary`")
-    return correlate({"capstone": (binary.arch, binary.mode)})
+    return correlate({
+        "capstone": {
+            "arch": binary.arch,
+            "endianness": binary.endianness,
+            "mode": binary.mode
+        }
+    })
 
 def correlate(isa):
     """correlate a capstone/keystone ISA"""
     if not "capstone" in isa \
             and not "keystone" in isa:
-        raise KeyError("expected either a capstone or keystone ISA")
+        raise KeyError("expected either a Capstone or Keystone ISA")
     elif "capstone" in isa \
             and "keystone" in isa:
         return isa
     elif "capstone" in isa:
         isa["keystone"] = [None, None]
 
-        if isa["capstone"][0] == capstone.CS_ARCH_MIPS:
+        if isa["capstone"]["arch"] == capstone.CS_ARCH_MIPS:
             isa["keystone"] = keystone.KS_ARCH_MIPS
-        elif isa["capstone"][0] == capstone.CS_ARCH_X86:
+        elif isa["capstone"]["arch"] == capstone.CS_ARCH_X86:
             isa["keystone"] = keystone.KS_ARCH_MIPS
         else:
             raise ValueError("unsupported architecture")
 
-        if isa["capstone"][1] == capstone.CS_MODE_32:
-            isa["keystone"][1] = keystone.KS_MODE_32
-        elif isa["capstone"][1] == capstone.CS_MODE_64:
-            isa["keystone"][1] = keystone.KS_MODE_64
+        if isa["capstone"]["endianness"] == capstone.CS_MODE_BIG_ENDIAN:
+            isa["keystone"]["endianness"] = keystone.KS_MODE_BIG_ENDIAN
+        elif isa["capstone"]["endianness"] == capstone.CS_MODE_LITTLE_ENDIAN:
+            isa["keystone"]["endianness"] = keystone.KS_MODE_LITTLE_ENDIAN
+        else:
+            raise ValueError("unsupported endianness")
+
+        if isa["capstone"]["mode"] == capstone.CS_MODE_32:
+            isa["keystone"]["mode"] = keystone.KS_MODE_32
+        elif isa["capstone"]["mode"] == capstone.CS_MODE_64:
+            isa["keystone"]["mode"] = keystone.KS_MODE_64
         else:
             raise ValueError("unsupported mode")
     else:
         isa["capstone"] = [None, None]
 
-        if isa["keystone"][0] == keystone.KS_ARCH_MIPS:
+        if isa["keystone"]["arch"] == keystone.KS_ARCH_MIPS:
             isa["capstone"] = capstone.CS_ARCH_MIPS
-        elif isa["keystone"][0] == keystone.KS_ARCH_X86:
+        elif isa["keystone"]["arch"] == keystone.KS_ARCH_X86:
             isa["capstone"] = capstone.CS_ARCH_MIPS
         else:
             raise ValueError("unsupported architecture")
 
-        if isa["keystone"][1] == keystone.KS_MODE_32:
-            isa["capstone"][1] = capstone.CS_MODE_32
-        elif isa["keystone"][1] == keystone.KS_MODE_64:
-            isa["capstone"][1] = capstone.CS_MODE_64
+        if isa["keystone"]["endianness"] == keystone.KS_MODE_BIG_ENDIAN:
+            isa["capstone"]["endianness"] = capstone.CS_MODE_BIG_ENDIAN
+        elif isa["keystone"]["endianness"] == keystone.KS_MODE_LITTLE_ENDIAN:
+            isa["capstone"]["endianness"] = capstone.CS_MODE_LITTLE_ENDIAN
+        else:
+            raise ValueError("unsupported endianness")
+
+        if isa["keystone"]["mode"] == keystone.KS_MODE_32:
+            isa["capstone"]["mode"] = capstone.CS_MODE_32
+        elif isa["keystone"]["mode"] == keystone.KS_MODE_64:
+            isa["capstone"]["mode"] = capstone.CS_MODE_64
         else:
             raise ValueError("unsupported mode")
     return isa
 
-def endianness(isa):
-    """infer the endianness from an ISA dictionary ("big" or "little")"""
-    if not isinstance(isa, dict):
-        raise TypeError("expected an ISA dictionary")
-    _isa = correlate(isa.clone())
-
-    if _isa["capstone"][0] == capstone.CS_ARCH_MIPS:
-        return "big"
-    elif _isa["capstone"][0] == capstone.CS_ARCH_X86:
-        return "little"
-    raise ValueError("unknown endianness")
-
 def parse(s):
     """
-    parse an ISA string into
-    `{"capstone": (arch, mode), "keystone": (arch, mode)`
+    parse an ISA string (e.g. "x86-64-Little") into:
+    ```
+    {
+        "capstone": (arch, mode),
+        "endianness": ("big" OR "little" OR None),
+        "keystone": (arch, mode)
+    }
+    ```
     """
     arch = None
     components = [""]
     mode = None
     output = {k: [None, None] for k in ("capstone", "keystone")}
+    output["endianness"] = None
     s = s.lower()
 
     for c in s:
@@ -89,30 +104,43 @@ def parse(s):
             components.append("")
             continue
         components[-1] += c
+    components = list(filter(None, components))
 
-    try:
-        arch, mode = list(filter(None, components))
-    except ValueError:
+    if len(components) == 2:
+        arch, mode = components
+    elif len(components) == 3:
+        arch, mode, output["capstone"]["endianness"] = components
+
+        if output["capstone"]["endianness"] == "big":
+            output["capstone"]["endianness"] = capstone.CS_MODE_BIG_ENDIAN
+        elif output["capstone"]["endianness"] == "little":
+            output["capstone"]["endianness"] = capstone.CS_MODE_LITTLE_ENDIAN
+        else:
+            raise ValueError("unsupported endianness")
+    else:
         raise ValueError("invalid ISA")
 
     # classify architecture
 
     if arch == "mips":
-        output["capstone"][0] = capstone.CS_ARCH_MIPS
-        output["keystone"][0] = keystone.KS_ARCH_MIPS
+        output["capstone"]["arch"] = capstone.CS_ARCH_MIPS
+        output["keystone"]["arch"] = keystone.KS_ARCH_MIPS
     elif arch == "x86":
-        output["capstone"][0] = capstone.CS_ARCH_X86
-        output["keystone"][0] = keystone.KS_ARCH_X86
+        output["capstone"]["arch"] = capstone.CS_ARCH_X86
+        output["keystone"]["arch"] = keystone.KS_ARCH_X86
 
     # classify mode
 
     if mode == "32":
-        output["capstone"][1] = capstone.CS_MODE_32
-        output["keystone"][1] = keystone.KS_MODE_32
+        output["capstone"]["mode"] = capstone.CS_MODE_32
+        output["keystone"]["mode"] = keystone.KS_MODE_32
     elif mode == "64":
-        output["capstone"][1] = capstone.CS_MODE_64
-        output["keystone"][1] = keystone.KS_MODE_64
-    return {k: tuple(v) for k, v in output.items()}
+        output["capstone"]["mode"] = capstone.CS_MODE_64
+        output["keystone"]["mode"] = keystone.KS_MODE_64
+
+    for k in ("capstone", "keystone"):
+        output[k] = tuple(output[k])
+    return output
 
 if __name__ == "__main__":
     # test

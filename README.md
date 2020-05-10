@@ -5,14 +5,14 @@
 See [the SDD](SDD.md).
 
 # To Do
-- `analyze`
+- ~~`analyze`~~
 	- ~~`Binary`~~
 	- ~~`CodeSlice`~~
-- `gadget` (Junming)
-	- `Gadgets`
-		- `search`
-			- regular expressions
-			- return `None` if unfound
+- ~~`gadget`~~
+	- ~~`Gadgets`~~
+		- ~~`search`~~
+			- ~~regular expressions~~
+			- ~~return `None` if unfound~~
 - `iio` (Bailey)
 	- `AssemblyIO`
 	- `pload`
