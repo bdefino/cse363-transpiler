@@ -61,8 +61,23 @@ def correlate(isa):
             raise ValueError("unsupported mode")
     return isa
 
+def endianness(isa):
+    """infer the endianness from an ISA dictionary ("big" or "little")"""
+    if not isinstance(isa, dict):
+        raise TypeError("expected an ISA dictionary")
+    _isa = correlate(isa.clone())
+
+    if _isa["capstone"][0] == capstone.CS_ARCH_MIPS:
+        return "big"
+    elif _isa["capstone"][0] == capstone.CS_ARCH_X86:
+        return "little"
+    raise ValueError("unknown endianness")
+
 def parse(s):
-    """parse an ISA string into a capstone `(arch, mode)`"""
+    """
+    parse an ISA string into
+    `{"capstone": (arch, mode), "keystone": (arch, mode)`
+    """
     arch = None
     components = [""]
     mode = None
