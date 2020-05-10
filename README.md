@@ -29,6 +29,9 @@ See [the SDD](SDD.md).
 - `__main__`
 	- `main`
 		- adapt to `mprotect` interface
+			- add `buf`/`buflen` options to the CLI
+			- `chain` option
+				- `mprotect` sub-option
 - `transpile`
 	- `Transpiler`
 		- `__call__`
