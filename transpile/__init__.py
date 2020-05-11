@@ -1,5 +1,5 @@
 try:
-    from . import analyze, gadget, iio, isa, transpile, verbosity
+    from . import analyze, gadget, iio, isa, transpile
 except ImportError:
     import os
     import sys
@@ -11,7 +11,6 @@ except ImportError:
     import iio
     import isa
     import transpile
-    import verbosity
 
 __doc__ = "transpiler library"
 

@@ -5,7 +5,7 @@ import re
 import struct
 
 try:
-    from . import gadget, iio, verbosity
+    from . import gadget, iio
 except ImportError:
     import os
     import sys
@@ -14,13 +14,12 @@ except ImportError:
 
     import gadget
     import iio
-    import verbosity
 
 
 class Transpiler:
     """transpilation base"""
 
-    def __init__(self, target, all_permutations=False, recurse=False, verbosity=None):
+    def __init__(self, target, all_permutations=False, recurse=False):
         self.target = target  # `capstone.CsInsn`s
 
     def __call__(self, *objs):
