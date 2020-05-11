@@ -14,7 +14,7 @@ except ImportError:
     import analyze
     import isa
 
-__doc__ = "instruction de/serialization"
+__doc__ = "instruction de/serialization"#############auto-correlate upon calls; add pload to BaseInstructionIO spec
 
 class BaseInstructionIO:
     """instruction de/serialization"""
