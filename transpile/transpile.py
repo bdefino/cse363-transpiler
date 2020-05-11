@@ -165,6 +165,7 @@ class Transpiler:
 
         ####
         # fill in stack args
+        # double,triple,quad pops
 
         return None
 
