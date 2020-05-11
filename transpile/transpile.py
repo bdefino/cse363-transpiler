@@ -310,7 +310,7 @@ if __name__ == "__main__":
     # generate an `mprotect` chain for x86-32 Linux
 
     chain = Transpiler.chain("mprotect", buf=0xEEEEEEEE, buflen=0xFFFFFFFF,
-                             rop=-0x1, *[iio.pload(p) for p in sys.argv[1]])
+                             rop=-0x1, *[iio.pload(p) for p in sys.argv[1:]])
 
     with os.fdopen(sys.stdout.fileno(), "wb") as fp:
         fp.write(chain)
