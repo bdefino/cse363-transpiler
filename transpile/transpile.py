@@ -110,6 +110,9 @@ class Transpiler:
         which should be interpreted as REGISTER CONTENTS
         (endianness to be determined by the caller)
         """
+
+        # attempt to match (sub)permutations
+
         chain = []
         matched = {}
         nregs = len(regs)
