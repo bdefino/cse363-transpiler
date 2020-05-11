@@ -56,8 +56,9 @@ class Gadgets:
     def search(self, pattern, verbose=0):
         """ verbose level:
             0 = no output
-            1 = output if gadget is found or not
-            2 = output every gadget string
+            1 = print gadget found
+            2 = print gadget found + gadget string
+            3 = print gadget not found
         """
         pattern = " ; ".join(i.strip() for i in pattern.split(';'))
         glist = {}
@@ -77,7 +78,7 @@ class Gadgets:
                 print("gadget found")
             return glist
         else:
-            if verbose >= 1:
+            if verbose >= 3:
                 print("gadget not found")
             return None
 
