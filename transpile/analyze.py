@@ -156,3 +156,12 @@ ELF_ENDIAN = {
     filebytes.elf.ELFDATA.LSB: capstone.CS_MODE_LITTLE_ENDIAN,
     filebytes.elf.ELFDATA.MSB: capstone.CS_MODE_BIG_ENDIAN,
 }
+
+if __name__ == "__main__":
+    # test
+
+    f = open("../linux_32", "br")
+    x = f.read()
+    head = Binary(x)
+    e = head.executable_sections
+    print(e)
