@@ -39,7 +39,7 @@ def correlate(isa):
         if isa["capstone"]["arch"] == capstone.CS_ARCH_MIPS:
             isa["keystone"] = keystone.KS_ARCH_MIPS
         elif isa["capstone"]["arch"] == capstone.CS_ARCH_X86:
-            isa["keystone"] = keystone.KS_ARCH_MIPS
+            isa["keystone"] = keystone.KS_ARCH_X86
         else:
             raise ValueError("unsupported architecture")
 
@@ -62,7 +62,7 @@ def correlate(isa):
         if isa["keystone"]["arch"] == keystone.KS_ARCH_MIPS:
             isa["capstone"] = capstone.CS_ARCH_MIPS
         elif isa["keystone"]["arch"] == keystone.KS_ARCH_X86:
-            isa["capstone"] = capstone.CS_ARCH_MIPS
+            isa["capstone"] = capstone.CS_ARCH_X86
         else:
             raise ValueError("unsupported architecture")
 
@@ -86,9 +86,14 @@ def parse(s):
     parse an ISA string (e.g. "x86-64-Little") into:
     ```
     {
-        "capstone": (arch, mode),
-        "endianness": ("big" OR "little" OR None),
-        "keystone": (arch, mode)
+        "capstone": {
+            "arch": arch,
+            "endianness": "big" or "little" or None,
+            "mode": mode
+        },
+        "keystone": {
+            ... (same as previous)
+        }
     }
     ```
     """

@@ -104,28 +104,38 @@ class Transpiler:
 
     @staticmethod
     def _regassign(*gadgetss, **regs):
-        """"""
+        """return a chain for assigning a value to a register"""
         chain = []
-        gadgets = set()
+        matched = {}
         nregs = len(regs)
-        regs = regs.clone()
+        unmatched = regs.clone()
 
         while nregs > 0:
-            for perm in itertools.permutations(regs.keys(), nregs):
+            for perm in itertools.permutations(unmatched.keys(), nregs):
                 pattern = ';'.join(["pop " + r for r in perm] + ["ret"])
-                g = Transpiler._first_matching_gadget(pattern, *gadgetss)
+                gadget = Transpiler._first_matching_gadget(pattern, *gadgetss)
 
-                if g:
-                    gadgets.add(g)
-
+                if gadget:
                     for reg in perm:
-                        del gadgets[reg]
+                        matched[reg] = gadget
+                        del unmatched[reg]
                         nregs -= 1
             nregs -= 1
 
-        # populate unmatched registers
+        # populate matched registers
 
-        while ##
+        for reg, gadget in matched.items():
+            chain.append(regs[reg])
+
+        # populate unmatched registers incrementally
+
+        for reg, n in unmatched.items():
+            subchain = Transpiler._inc_reg_n(reg, n, *gadgets)
+
+            if not subchain:
+                return
+            chain += subchain
+        return chain
 
     @staticmethod
     def mprotect_pop_reg_combo(a, b, c, d, *gadgetss):
