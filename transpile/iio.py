@@ -69,8 +69,8 @@ class AssemblyIO(BaseInstructionIO):
     @staticmethod
     def dump(fp, extent):
         """load a single executable extent to a file"""
-        fp.write(b'\n'.join((bytes(i.mnemonic)
-                             for i in extent["instructions"])))
+        for i in extent["instructions"]:
+            fp.write(b"%b %b\n" % tuple((s.encode("ascii") for s in (i.mnemonic, i.op_str))))
 
     @staticmethod
     def load(fp, _isa, offset=0):
@@ -79,14 +79,13 @@ class AssemblyIO(BaseInstructionIO):
 
         # first, assemble
 
-        b = io.BytesIO()
         _extent = fp.read()
-        MachineCodeIO.dump(b, {"instructions": _extent, "isa": _isa})
-        b.seek(0, os.SEEK_SET)
+        assembled = bytes(keystone.Ks(_isa["keystone"]["arch"],
+            _isa["keystone"]["endianness"] + _isa["keystone"]["mode"]).asm(_extent)[0])
 
         # disassemble
 
-        extent = MachineCodeIO.load(b, _isa, offset)
+        extent = MachineCodeIO.load(io.BytesIO(assembled), _isa, offset)
         extent["extent"] = _extent
         return extent
 
@@ -112,9 +111,17 @@ class MachineCodeIO(AssemblyIO):
     def dump(fp, extent):
         """load a single executable extent to a file"""
         _isa = isa.correlate(copy.deepcopy(extent["isa"]))
-        return keystone.Ks(_isa["keystone"]["arch"],
+
+        # dump assembly
+
+        b = io.BytesIO()
+        AssemblyIO.dump(b, extent)
+
+        # assemble
+
+        fp.write(bytes(keystone.Ks(_isa["keystone"]["arch"],
                            _isa["keystone"]["endianness"] + _isa["keystone"]["mode"]).asm(
-            extent["instructions"])
+            b.getvalue())[0]))
 
     @staticmethod
     def load(fp, _isa, offset=0):
@@ -132,9 +139,9 @@ class MachineCodeIO(AssemblyIO):
         return {
             "base": offset,
             "extent": extent,
-            "instructions": capstone.Cs(_isa["capstone"]["arch"],
-                                        _isa["capstone"]["endianness"]
-                                        + _isa["capstone"]["mode"]).disasm(fp.read(), offset),
+            "instructions": tuple(capstone.Cs(_isa["capstone"]["arch"],
+                _isa["capstone"]["endianness"]
+                    + _isa["capstone"]["mode"]).disasm(fp.read(), offset)),
             "isa": _isa
         }
 
@@ -144,7 +151,7 @@ class MachineCodeIO(AssemblyIO):
         _isa = isa.correlate(copy.deepcopy(extent["isa"]))
 
         with open(path, "wb") as fp:
-            return MachineCodeIO.dump(fp, extent)
+            MachineCodeIO.dump(fp, extent)
 
     @staticmethod
     def pload(path, _isa, offset=0):
@@ -197,8 +204,10 @@ if __name__ == "__main__":
     print(compiled)
     source = AssemblyIO.pload("../x86-32-little.S", isa.parse("x86-32-little"))
     print(source)
-    print([source["extent"]])
+
+    # test dumping to assembly/machine code (not a full binary)
 
     with os.fdopen(sys.stdin.fileno(), "wb") as fp:
         AssemblyIO.dump(fp, source)
         MachineCodeIO.dump(fp, source)
+
