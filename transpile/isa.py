@@ -95,7 +95,10 @@ def parse(s):
     arch = None
     components = [""]
     mode = None
-    output = {k: [None, None] for k in ("capstone", "keystone")}
+    output = {
+        "capstone": {},
+        "keystone": {}
+        }
     output["endianness"] = None
     s = s.lower()
 
@@ -123,29 +126,27 @@ def parse(s):
     # classify architecture
 
     if arch == "mips":
-        output["capstone"]["arch"] = capstone.CS_ARCH_MIPS
-        output["keystone"]["arch"] = keystone.KS_ARCH_MIPS
+        output["capstone"]["arch"] = capstone.CS_ARCH_MIPS)
     elif arch == "x86":
         output["capstone"]["arch"] = capstone.CS_ARCH_X86
-        output["keystone"]["arch"] = keystone.KS_ARCH_X86
+    else:
+        raise ValueError("unsupported architecture")
 
     # classify mode
 
     if mode == "32":
         output["capstone"]["mode"] = capstone.CS_MODE_32
-        output["keystone"]["mode"] = keystone.KS_MODE_32
     elif mode == "64":
         output["capstone"]["mode"] = capstone.CS_MODE_64
-        output["keystone"]["mode"] = keystone.KS_MODE_64
-
-    for k in ("capstone", "keystone"):
-        output[k] = tuple(output[k])
-    return output
+    else:
+        raise ValueError("unsupported mode")
+    output["capstone"] = tuple(output["capstone"])
+    return correlate(output)
 
 if __name__ == "__main__":
     # test
 
-    isa = parse("x84-64")
+    isa = parse("x84-64-Little")
     print(isa)
     del isa["keystone"]
     print(correlate(isa))
