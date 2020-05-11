@@ -21,9 +21,9 @@ class BaseInstructionIO:
 
     @staticmethod
     def dump(fp, instructions, isa):
-        """dump instructions (`capstone.CsInsn`s, or a string) to a file"""
+        """dump instructions (`capstone.CsInsn/bytes/str`s) to a file"""
         return keystone.Ks(isa["keystone"]["arch"],
-            isa["keystone"]["endianness"] + isa["keystone"]["endianness"]).asm(
+            isa["keystone"]["endianness"] + isa["keystone"]["mode"]).asm(
                 instructions)
 
     @staticmethod
@@ -34,7 +34,7 @@ class BaseInstructionIO:
     @staticmethod
     def ploadall(path, isa, sections = None):
         """
-        load all executable sections sat a path
+        load all executable sections at a path
 
         input sections are of the form `{name: base}`
 
@@ -56,20 +56,22 @@ class AssemblyIO(BaseInstructionIO):
     """assembly deserialization"""
 
     @staticmethod
-    def load(fp, isa, offset = 0):###########################################################
+    def load(fp, isa, offset = 0):
         """load `capstone.CsInsn`s from a file (given an offset)"""
         # first, assemble
 
         s = io.StringIO()
-        AssemblyIO.dump(fp.read(), s)
+        BaseInstructionIO.dump(s, fp.read())
         s.seek(0, os.SEEK_SET)
-        return MachineCodeIO.load(s, isa,
-            sections.get(".text", 0) if isinstance(sections, dict) else 0)
+
+        # disassemble
+
+        return MachineCodeIO.load(s, isa, offset)
 
     @staticmethod
-    def ploadall(path, isa, sections = None):
+    def pload(path, isa, offset = 0):
         """
-        load all executable sections sat a path
+        load ~~all~~ A SINGLE executable section~~s~~ at a path
 
         input sections are of the form `{name: base}`
 
@@ -86,7 +88,7 @@ class AssemblyIO(BaseInstructionIO):
             ```
         """
         with open(path) as fp:
-            raise NotImplementedError()################################################################################loading multiple sections from assembly?
+            return AssemblyIO.load(fp, isa, offset)
 
 class MachineCodeIO(AssemblyIO):
     """machine code deserialization"""
@@ -99,9 +101,9 @@ class MachineCodeIO(AssemblyIO):
                 fp.read(), offset)
 
     @staticmethod
-    def ploadall(path, sections = None):##########################################################
+    def ploadall(path, sections = None):
         """
-        load all executable sections sat a path
+        load all executable sections at a path
 
         input sections are of the form `{name: base}`
 
@@ -117,8 +119,14 @@ class MachineCodeIO(AssemblyIO):
             }
             ```
         """
+
+        # load the binary
+
         with open(path, "rb") as fp:
             binary = analyze.Binary(fp.read())
+
+        # compute the complete ISA
+
         _isa = isa.correlate({
             "capstone": {
                 "arch": binary.arch,
@@ -126,6 +134,9 @@ class MachineCodeIO(AssemblyIO):
                 "mode": binary.mode
             }
         })
+
+        # load sections
+
         sections = dict(sections) if isinstance(sections, dict) \
             else {".text": None}
         sections = {k: {"base": v} for k, v in sections.items()}
@@ -138,15 +149,17 @@ class MachineCodeIO(AssemblyIO):
                 "base": base,
                 "extent": extent,
                 "instructions": MachineCodeIO.load(
-                        io.BytesIO(extent.binary_arr), _isa,
-                    base),
+                    io.BytesIO(extent.binary_arr), _isa, base),
                 "isa": _isa
             }
-        return list(filter(lambda n: isinstance(sections[n], dict), sections))
+
+        # filter out unmatched sections
+
+        return list(filter(lambda s: len(s.keys()) > 1, sections))
 
 if __name__ == "__main__":
     # test loading from a binary
 
-    from_binary = pload("/usr/lib/i386-linux-gnu/libc.so")
-    from_assembly = pload("../mprotect.S", text = True)
+    print(MachineCodeIO.ploadall("/usr/lib/i386-linux-gnu/libc.so"))
+    print(AssemblyIO.ploadall("../mprotect.S"))
 
