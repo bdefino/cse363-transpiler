@@ -209,6 +209,8 @@ class Transpiler:
         for g in reg_d.items():
             s.add(g)
 
+        ##################################################################
+        # need endianess; default little x86
         for g in s:
             # check the gagdet
             chain += list(g[0])
