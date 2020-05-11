@@ -104,7 +104,6 @@ def parse(s):
         "capstone": {},
         "keystone": {}
         }
-    output["endianness"] = None
     s = s.lower()
 
     for c in s:
