@@ -32,7 +32,7 @@ class Transpiler:
 
         objs = [iio.pload(o) for o in objs]  # load all objects from disk
 
-        if not all(([o["isa"]] == objs[:1] for o in objs[1:])):
+        if Transpiler._isa_mismatch():
             raise TypeError("ISA mismatch")
 
         # populate gadgets
@@ -54,7 +54,7 @@ class Transpiler:
         """establish a predefined ROP chain"""
         chains = {"mprotect": Transpiler.mprotect}
 
-        if not all(([o["isa"]] == objs[:1] for o in objs[1:])):
+        if Transpiler._isa_mismatch(*objs):
             raise TypeError("ISA mismatch")
 
         if which in chains:
@@ -67,9 +67,6 @@ class Transpiler:
         return the first matching gadget from a list of `gadget.Gadgets`
         instances
         """
-        if not set((True for g in gadgetss)) == {True}:
-            raise TypeError("expected `gadget.Gadgets` instances")
-
         for g in gadgetss:
             gadget = g.search(pattern)
 
@@ -80,11 +77,6 @@ class Transpiler:
     @staticmethod
     def _inc_reg_n(reg, n=0, *gadgetss):
         """incrementally fill a register"""
-        if not set((True for g in gadgetss)) == {True}:
-            raise TypeError("expected `gadget.Gadgets` instances")
-
-        if not isinstance(n, int):
-            raise TypeError("expected an integer")
         # zero out the register
 
         chain = [Transpiler._first_matching_gadget("xor %s, %s" % (reg, reg),
@@ -102,7 +94,16 @@ class Transpiler:
         return chain
 
     @staticmethod
-    def _regassign(*gadgetss, **regs):
+    def _isa_mismatch(*objs):
+        """
+        return whether there's a mismatch between the ISAs of extents across a
+        collection of objects
+        """
+        return len(set(itertools.chain(((e["isa"] for e in o)
+            for o in objs)))) > 1
+
+    @staticmethod
+    def _reg_assign(*gadgetss, **regs):
         """
         return a chain for assigning a value to a register;
         these values MAY include miscellaneous types:
@@ -228,9 +229,6 @@ class Transpiler:
 
     @staticmethod
     def _pop_reg(reg, val, *gadgetss):
-        if not set((True for g in gadgetss)) == {True}:
-            raise TypeError("expected `gadget.Gadgets` instances")
-
         # convert val to bytes
         ##################################################################
         # need endianess; default little x86
@@ -251,7 +249,7 @@ class Transpiler:
         generate an `mprotect` ROP chain
         (expects "buf", "buflen", and "rop" in `kwargs`)
         """
-        if not all(([o["isa"]] == objs[:1] for o in objs[1:])):
+        if Transpiler._isa_mismatch(*objs):
             raise TypeError("ISA mismatch")
         # per-ISA discrimination
         for k, v in ("buf", "buflen", "rop"):
