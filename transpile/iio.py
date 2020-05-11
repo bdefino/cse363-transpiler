@@ -148,11 +148,7 @@ class MachineCodeIO(AssemblyIO):
         _isa = isa.correlate(copy.deepcopy(_isa))
 
         with open(path, "rb") as fp:
-            extent = fp.read()
-            fp.seek(0, os.SEEK_SET)
-            return {
-                        "base":
-                    }
+            return MachineCodeIO.load(fp)
 
     @staticmethod
     def ploadall(path, extents = None):
@@ -182,13 +178,8 @@ class MachineCodeIO(AssemblyIO):
             base = extents[extent.name] \
                 if isinstance(extents.get(extent.name, None), int) \
                 else extent.addr
-            extents[extent.name] = {
-                "base": base,
-                "extent": extent,
-                "instructions": MachineCodeIO.load(
-                    io.BytesIO(extent.binary_arr), _isa, base),
-                "isa": copy.deepcopy(_isa)
-            }
+            extents[extent.name] = MachineCodeIO.load(
+                o.BytesIO(extent.binary_arr), _isa, base}
 
         # filter out unmatched extents
 
