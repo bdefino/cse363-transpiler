@@ -258,7 +258,7 @@ class Transpiler:
         # check for single pop
         for c in POP_REG_COMBO_POOL["single"]:
             for g in gadgetss:
-                gadget = g.search(c)
+                gadget = g.search(c, 2)
                 if gadget:
                     re_output = re.findall("e[a-d]x", gadget[1])
                     if re_output:
@@ -267,7 +267,7 @@ class Transpiler:
         # check for double pop
         for c in POP_REG_COMBO_POOL["double"]:
             for g in gadgetss:
-                gadget = g.search(c)
+                gadget = g.search(c, 2)
                 if gadget:
                     re_output = re.findall("e[a-d]x", gadget[1])
                     if re_output:
@@ -277,7 +277,7 @@ class Transpiler:
         # check for triple pop
         for c in POP_REG_COMBO_POOL["triple"]:
             for g in gadgetss:
-                gadget = g.search(c)
+                gadget = g.search(c, 2)
                 if gadget:
                     re_output = re.findall("e[a-d]x", gadget[1])
                     if re_output:
@@ -287,7 +287,7 @@ class Transpiler:
         # check for quad pop
         for c in POP_REG_COMBO_POOL["quad"]:
             for g in gadgetss:
-                gadget = g.search(c)
+                gadget = g.search(c, 2)
                 if gadget:
                     re_output = re.findall("e[a-d]x", gadget[1])
                     if re_output:
@@ -379,28 +379,28 @@ class Transpiler:
                 7,
                 *gadgetss)
         except ValueError:
+            print("fallback")
             # pop method failed; do other
 
             # `mov eax, (MPROTECT)`
-            chain += list(Transpiler._mov_reg_n("eax", 125, *gadgetss))
+            chain += list(Transpiler._inc_reg_n("eax", 125, *gadgetss))
 
             # `mov ebx, (ROP)`
 
-            chain += list(Transpiler._mov_reg_n("ebx", kwargs["rop"],
+            chain += list(Transpiler._inc_reg_n("ebx", kwargs["rop"],
                                                 *gadgetss))
             # `mov ecx, (BUFLEN)`
 
-            chain += list(Transpiler._mov_reg_n("ecx", kwargs["buflen"],
+            chain += list(Transpiler._inc_reg_n("ecx", kwargs["buflen"],
                                                 *gadgetss))
             # `mov edx, (PROT_EXEC | PROT_READ | PROT_WRITE)`
 
-            chain += list(Transpiler._mov_reg_n("edx", 7, *gadgetss))
-        finally:
-            # `int 0x80`
+            chain += list(Transpiler._inc_reg_n("edx", 7, *gadgetss))
+        # `int 0x80`
 
-            chain.append(Transpiler._first_matching_gadget(
-                "int 0x80", *gadgetss))
-            return b"".join(chain)
+        chain.append(Transpiler._first_matching_gadget(
+            "int 0x80", *gadgetss))
+        return b"".join(chain)
 
 
 if __name__ == "__main__":
@@ -413,4 +413,3 @@ if __name__ == "__main__":
 
     with os.fdopen(sys.stdout.fileno(), "wb") as fp:
         fp.write(chain)
-
