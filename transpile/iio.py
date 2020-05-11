@@ -17,6 +17,7 @@ except ImportError:
 
 __doc__ = "instruction de/serialization"
 
+
 class BaseInstructionIO:
     """
     instruction de/serialization
@@ -42,7 +43,7 @@ class BaseInstructionIO:
         raise NotImplementedError()
 
     @staticmethod
-    def load(fp, _isa, offset = 0):
+    def load(fp, _isa, offset=0):
         """load a single executable extent from a file"""
         raise NotImplementedError()
 
@@ -52,14 +53,15 @@ class BaseInstructionIO:
         raise NotImplementedError()
 
     @staticmethod
-    def pload(path, _isa, offset = 0):
+    def pload(path, _isa, offset=0):
         """load a single executable extent at a path"""
         raise NotImplementedError()
 
     @staticmethod
-    def ploadall(path, extents = None):
+    def ploadall(path, extents=None):
         """load all executable extents at a path"""
         raise NotImplementedError()
+
 
 class AssemblyIO(BaseInstructionIO):
     """assembly de/serialization"""
@@ -67,10 +69,11 @@ class AssemblyIO(BaseInstructionIO):
     @staticmethod
     def dump(fp, extent):
         """load a single executable extent to a file"""
-        fp.write(b'\n'.join((bytes(i.mnemonic) for i in extent["instructions"])))
+        fp.write(b'\n'.join((bytes(i.mnemonic)
+                             for i in extent["instructions"])))
 
     @staticmethod
-    def load(fp, _isa, offset = 0):
+    def load(fp, _isa, offset=0):
         """load a single executable extent from a file"""
         _isa = isa.correlate(copy.deepcopy(_isa))
 
@@ -94,12 +97,13 @@ class AssemblyIO(BaseInstructionIO):
             AssemblyIO.dump(fp, extent)
 
     @staticmethod
-    def pload(path, _isa, offset = 0):
+    def pload(path, _isa, offset=0):
         """load a single executable extent at a path"""
         _isa = isa.correlate(copy.deepcopy(_isa))
 
         with open(path, "rb") as fp:
             return AssemblyIO.load(fp, _isa, offset)
+
 
 class MachineCodeIO(AssemblyIO):
     """machine code de/serialization"""
@@ -109,11 +113,11 @@ class MachineCodeIO(AssemblyIO):
         """load a single executable extent to a file"""
         _isa = isa.correlate(copy.deepcopy(extent["isa"]))
         return keystone.Ks(_isa["keystone"]["arch"],
-            _isa["keystone"]["endianness"] + _isa["keystone"]["mode"]).asm(
-                extent["instructions"])
+                           _isa["keystone"]["endianness"] + _isa["keystone"]["mode"]).asm(
+            extent["instructions"])
 
     @staticmethod
-    def load(fp, _isa, offset = 0):
+    def load(fp, _isa, offset=0):
         """load a single executable extent from a file"""
         _isa = isa.correlate(copy.deepcopy(_isa))
 
@@ -126,13 +130,13 @@ class MachineCodeIO(AssemblyIO):
         # load
 
         return {
-                "base": offset,
-                "extent": extent,
-                "instructions": capstone.Cs(_isa["capstone"]["arch"],
-                    _isa["capstone"]["endianness"]
-                        + _isa["capstone"]["mode"]).disasm(fp.read(), offset),
-                "isa": _isa
-            }
+            "base": offset,
+            "extent": extent,
+            "instructions": capstone.Cs(_isa["capstone"]["arch"],
+                                        _isa["capstone"]["endianness"]
+                                        + _isa["capstone"]["mode"]).disasm(fp.read(), offset),
+            "isa": _isa
+        }
 
     @staticmethod
     def pdump(path, extent):
@@ -143,7 +147,7 @@ class MachineCodeIO(AssemblyIO):
             return MachineCodeIO.dump(fp, extent)
 
     @staticmethod
-    def pload(path, _isa, offset = 0):
+    def pload(path, _isa, offset=0):
         """load a single executable extent at a path"""
         _isa = isa.correlate(copy.deepcopy(_isa))
 
@@ -151,7 +155,7 @@ class MachineCodeIO(AssemblyIO):
             return MachineCodeIO.load(fp)
 
     @staticmethod
-    def ploadall(path, extents = None):
+    def ploadall(path, extents=None):
         """load all executable extents at a path"""
 
         # load the binary
@@ -185,6 +189,7 @@ class MachineCodeIO(AssemblyIO):
 
         return {k: v for k, v in extents.items() if len(v.keys()) > 1}
 
+
 if __name__ == "__main__":
     # test loading from a binary
 
@@ -197,4 +202,3 @@ if __name__ == "__main__":
     with os.fdopen(sys.stdin.fileno(), "wb") as fp:
         AssemblyIO.dump(fp, source)
         MachineCodeIO.dump(fp, source)
-
