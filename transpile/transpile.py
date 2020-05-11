@@ -32,7 +32,7 @@ class Transpiler:
 
         objs = [iio.pload(o) for o in objs]  # load all objects from disk
 
-        if not all(([o.isa] == objs[:1] for o in objs[1:])):
+        if not all(([o["isa"]] == objs[:1] for o in objs[1:])):
             raise TypeError("ISA mismatch")
 
         # populate gadgets
@@ -54,7 +54,7 @@ class Transpiler:
         """establish a predefined ROP chain"""
         chains = {"mprotect": Transpiler.mprotect}
 
-        if not all(([o.isa] == objs[:1] for o in objs[1:])):
+        if not all(([o["isa"]] == objs[:1] for o in objs[1:])):
             raise TypeError("ISA mismatch")
 
         if which in chains:
@@ -251,7 +251,7 @@ class Transpiler:
         generate an `mprotect` ROP chain
         (expects "buf", "buflen", and "rop" in `kwargs`)
         """
-        if not all(([o.isa] == objs[:1] for o in objs[1:])):
+        if not all(([o["isa"]] == objs[:1] for o in objs[1:])):
             raise TypeError("ISA mismatch")
         # per-ISA discrimination
         for k, v in ("buf", "buflen", "rop"):
