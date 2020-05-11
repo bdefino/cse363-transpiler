@@ -50,9 +50,10 @@ class BaseInstructionIO:
             }
             ```
         """
+        raise NotImplementedError()
 
     @staticmethod
-    def ploadall(path, _isa, extents = None):
+    def ploadall(path, extents = None):
         """
         load all executable extents at a path
 
@@ -121,7 +122,7 @@ class MachineCodeIO(AssemblyIO):
         """load `capstone.CsInsn`s from a file (given an offset)"""
         _isa = isa.correlate(copy.deepcopy(_isa))
         return capstone.Cs(_isa["capstone"]["arch"],
-            _isa["capstone"]["endianness"] + _isa["capstone"]["mode"]).d_isasm(
+            _isa["capstone"]["endianness"] + _isa["capstone"]["mode"]).disasm(
                 fp.read(), offset)
 
     @staticmethod
@@ -173,7 +174,6 @@ class MachineCodeIO(AssemblyIO):
             }
             ```
         """
-        _isa = isa.correlate(_isa.clone())
 
         # load the binary
 
@@ -196,7 +196,7 @@ class MachineCodeIO(AssemblyIO):
             else {".text": None}
         extents = {k: {"base": v} for k, v in extents.items()}
 
-        for extent in binary.executable_extents:
+        for extent in binary.executable_sections:
             base = extents[extent.name] \
                 if isinstance(extents.get(extent.name, None), int) \
                 else extent.addr
@@ -215,10 +215,9 @@ class MachineCodeIO(AssemblyIO):
 if __name__ == "__main__":
     # test loading from a binary
 
-    print(MachineCodeIO.ploadall("../linux_32"))
-    print(AssemblyIO.pload("../setx.S", {
-        "arch": capstone.CS_ARCH_X86,
-        "endianness": capstone.CS_MODE_LITTLE_ENDIAN,
-        "mode": capstone.CS_MODE_32
-        }))
+    compiled = MachineCodeIO.ploadall("../linux_32")
+    print(compiled)
+    source = AssemblyIO.pload("../x86-32-little.S", isa.parse("x86-32-little"))
+    print(source)
+    print([source["extent"]])
 

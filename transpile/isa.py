@@ -27,13 +27,16 @@ def binary(binary):
 
 def correlate(isa):
     """correlate a capstone/keystone ISA"""
-    if not "capstone" in isa \
+    keys = {"arch", "endianness", "mode"}
+
+    if not isinstance(isa, dict):
+        raise TypeError("expected an ISA dictionary")
+    elif not "capstone" in isa \
             and not "keystone" in isa:
         raise KeyError("expected either a Capstone or Keystone ISA")
     elif "capstone" in isa \
-            and "keystone" in isa:
-        return isa
-    elif "capstone" in isa:
+            and isinstance(isa["capstone"], dict) \
+            and set(isa["capstone"].keys()) == keys:
         isa["keystone"] = {}
 
         if isa["capstone"]["arch"] == capstone.CS_ARCH_MIPS:
@@ -56,7 +59,9 @@ def correlate(isa):
             isa["keystone"]["mode"] = keystone.KS_MODE_64
         else:
             raise ValueError("unsupported mode")
-    else:
+    elif "keystone" in isa \
+            and isinstance(isa["keystone"], dict) \
+            and set(isa["keystone"].keys()) == keys:
         isa["capstone"] = {}
 
         if isa["keystone"]["arch"] == keystone.KS_ARCH_MIPS:
@@ -79,6 +84,8 @@ def correlate(isa):
             isa["capstone"]["mode"] = capstone.CS_MODE_64
         else:
             raise ValueError("unsupported mode")
+    else:
+        raise KeyError("expected either a valid Capstone or Keystone ISA")
     return isa
 
 def parse(s):
