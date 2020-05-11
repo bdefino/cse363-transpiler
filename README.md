@@ -45,10 +45,12 @@ See [the SDD](SDD.md).
 		- `_inc_reg_n`
 		- `_regassign`
 		- `mprotect`
+			- per-ISA discrimination
 			- MUST treat subchains as containing mixed values
 				(e.g. bytes and integers (integers should be
 				interpreted as register contents))
 	- **test**
+- ARGUMENT VALIDATION
 
 # Sources
 - [Capstone](https://www.capstone-engine.org)
