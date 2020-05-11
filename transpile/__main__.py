@@ -64,9 +64,6 @@ def help(name):
     print(__doc__ % name, file = sys.stderr)
 
 def main(argv):
-    #from . import test
-    #return test.test()
-
     all_permutations = False
     buf = None
     buflen = None
