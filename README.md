@@ -13,7 +13,7 @@ See [the SDD](SDD.md).
 		- ~~`search`~~
 			- ~~regular expressions~~
 			- ~~return `None` if unfound~~
-- `iio`
+- `iio` (Bailey)
 	- `AssemblyIO`
 	- `pload`
 	- `BaseInstructionIO`
@@ -22,17 +22,18 @@ See [the SDD](SDD.md).
 - `__init__`
 	- `__doc__`
 	- ~~imports~~
-- `isa`
+- ~~`isa`~~
 	- ~~`binary`~~
 	- ~~`correlate`~~
 	- ~~`parse`~~
-	- **test**
-- `__main__`
+	- ~~**test**~~
+- `__main__` (Junming)
 	- `main`
 		- ~~adapt to `mprotect` interface~~
 			- ~~add `buf`/`buflen` options to the CLI~~
 			- ~~`chain` option~~
 				- ~~`mprotect` sub-option~~
+		- argument validation
 - `transpile`
 	- `Transpiler`
 		- rethink `__init__` interface (move args to `__call__`?)
@@ -44,8 +45,8 @@ See [the SDD](SDD.md).
 		- `chain`
 		- `_inc_reg_n`
 		- `_regassign`
-		- `mprotect`
-			- per-ISA discrimination
+		- `mprotect` (Bryan)
+			- per-ISA discrimination (favor x86-32/Linux)
 			- MUST treat subchains as containing mixed values
 				(e.g. bytes and integers (integers should be
 				interpreted as register contents))
@@ -56,6 +57,6 @@ See [the SDD](SDD.md).
 - [Capstone](https://www.capstone-engine.org)
 - [ELF](https://wiki.osdev.org/ELF)
 - [Filebytes]()
-- [Keystone](https://keystone-engine.org)
+- [Keystone](https://www.keystone-engine.org)
 - [Netwide Assembler]()
 
