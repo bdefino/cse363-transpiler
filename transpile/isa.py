@@ -126,7 +126,7 @@ def parse(s):
     # classify architecture
 
     if arch == "mips":
-        output["capstone"]["arch"] = capstone.CS_ARCH_MIPS)
+        output["capstone"]["arch"] = capstone.CS_ARCH_MIPS
     elif arch == "x86":
         output["capstone"]["arch"] = capstone.CS_ARCH_X86
     else:
