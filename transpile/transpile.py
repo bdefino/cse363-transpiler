@@ -40,7 +40,7 @@ class Transpiler:
         gadgetss = set()
 
         for o in objs:
-            for e in o:
+            for e in o.values():
                 e["gadgets"] = gadget.Gadgets(o["instructions"])
                 gadgetss.add(e["gadgets"])
 
@@ -285,7 +285,7 @@ class Transpiler:
         gadgetss = set()
 
         for o in objs:
-                for e in o:
+                for e in o.values():
                     e["gadgets"] = gadget.Gadgets(e["instructions"])
                     gadgetss.add(e["gadgets"])
 
