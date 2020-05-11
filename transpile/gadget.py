@@ -7,6 +7,7 @@ class Gadgets:
         self.cap = cap
         self.gadgets = {}
         self.depth = 5
+        self.find_gadgets()
 
     def __doc__(self):
         return "find gadgets from disassembled binary"
@@ -60,7 +61,9 @@ class Gadgets:
             2 = print gadget found + gadget string
             3 = print gadget not found
         """
-        pattern = " ; ".join(i.strip() for i in pattern.split(';'))
+        pattern = " ; ".join(i.strip() for i in pattern.split(';') if i.strip())
+        
+        print(pattern)
         glist = {}
         if verbose:
             print("target pattern:", pattern)
@@ -87,7 +90,7 @@ if __name__ == "__main__":
     code = b"\x4d\x39\x52\x54\x67\xc3\x5e\x72\x93\xe3\x73\x72\x5a\x5c\xc3\x5a\xc3"
     md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)
     g = Gadgets(md.disasm(code, 0x0))
-    g.find_gadgets()
+    
     print(g)
     print('----------------')
-    print(g.search('pop ...; ret'))
+    print(g.search('pop ...; ret ;', 1))
