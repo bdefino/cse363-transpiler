@@ -4,7 +4,7 @@ import sys
 import traceback
 
 try:
-    from . import iio, isa, transpile, verbosity
+    from . import iio, isa, transpile
 except ImportError:
     import os
     import sys
@@ -14,25 +14,10 @@ except ImportError:
     import iio
     import isa
     import transpile
-    import verbosity
 
-'''
-Question:
-attacker machine:
-Source[:BASE+offset]
-payload:
-gadget offset 1 0x1   (abs addr on victim's machine)
-gadget offset 2 0x100
-...
-gadget offset n 0xFFFF
 
-attacker's machine:
-cat payload | telnet SERVER
-'''
-
-###########################################################################ASLR?
 __doc__ = """transpile: compose an ROP payload
-Usage: transpile [OPTIONS] TARGET SOURCE[:SECTION=BASE...] ...
+Usage: %s [OPTIONS] TARGET SOURCE[:SECTION=BASE...] ...
 BASE
   force overwrite the base address for a SECTION within a SOURCE
 OPTIONS
@@ -46,7 +31,7 @@ OPTIONS
         (takes precedence over `-t`)
     -h
         print this text and exit
-    -i
+    -i ISAS
         instruction set of the TARGET(x86-64, MIPS-32, etc...)
     -l LENGTH
         buffer length (contextual)
@@ -63,8 +48,6 @@ OPTIONS
     -t
         treat TARGET as a text file
         (assembly; defaults to treating it as machine code)
-    -v
-        enable verbosity
 SECTION
     a section name within a SOURCE
 SOURCE
@@ -81,8 +64,9 @@ def help(name):
     print(__doc__ % name, file = sys.stderr)
 
 def main(argv):
-    from . import test
-    return test.test()##########################################################################
+    #from . import test
+    #return test.test()
+
     all_permutations = False
     buf = None
     buflen = None
@@ -94,19 +78,19 @@ def main(argv):
     sources = {} # `{path: {segment: base address}}`
     target = None
     text = False
-    verbosity = 0
 
     # parse arguments
 
-    opts, args = getopt.getopt("ab:chl:o:p:rtv+", argv[1:])
+    opts, args = getopt.getopt(argv[1:], "ab:chi:l:o:p:rt+")
 
     try:
-        target, sources = args[0], {k, v in (parse_source(a)
+        target, sources = args[0], {k:v for k, v in (parse_source(a)
             for a in args[1:])}
 
         if not sources:
             raise ValueError()
     except ValueError:
+        print("Empty sources")
         help(argv[0])
         return 1
 
@@ -147,8 +131,6 @@ def main(argv):
             recurse = True
         elif k == "-t":
             text = True
-        elif k == "-v":
-            verbosity += 1
 
     if not isas:
         print("Empty ISA.", file = sys.stderr)
@@ -156,16 +138,13 @@ def main(argv):
         return 1
 
     try:
-        verbosity = verbosity.Verbosity()######################################################################
-
         if chain:
             output = transpile.Transpiler.chain(target, buf = buf,
-                buflen = buflen, rop = rop, *objs)
+                buflen = buflen, rop = rop, *sources)
         else:
             target = (iio.AssemblyIO if text else iio.MachineCodeIO).load(
                 isa.parse(isas), target)
-            output = transpiler.Transpiler(target, all_permutations, recurse,
-                verbosity)
+            output = transpiler.Transpiler(target, all_permutations, recurse)
 
         if opath == '-':
             with os.fdopen(sys.stdout.fileno(), "wb") as fp:
@@ -174,7 +153,7 @@ def main(argv):
             with open(opath, "wb") as fp:
                 fp.write(output)
     except Exception as e:
-        traceback.format_exc(*e)
+        traceback.print_exception(type(e), e, e.__traceback__, file=sys.stderr)
         return 1
     return 0
 
