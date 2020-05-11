@@ -35,12 +35,18 @@ def pload(path, sections=None, text=False):
             }
         }
         ```
-    """
+    """############################################needs to handle assembly properly
     baseiio = AssemblyIO if text else MachineCodeIO
 
     with open(path, "rb") as fp:
         binary = analyze.Binary(fp.read())
-    _isa = isa.correlate({"capstone": (binary.arch, binary.mode)})
+    _isa = isa.correlate({
+        "capstone": {
+            "arch": binary.arch,
+            "endianness": binary.endianess,
+            "mode": binary.mode
+        }
+    })
     sections = dict(sections) if isinstance(sections, dict) \
         else {".text": None}
     sections = {k: {"base": v} for k, v in sections.items()}
@@ -109,4 +115,10 @@ class MachineCodeIO(BaseInstructionIO):
         return capstone.Cs(isa["capstone"]["arch"],
             isa["capstone"]["endianness"] + isa["capstone"]["mode"]).disasm(
                 fp.read(), offset)
+
+if __name__ == "__main__":
+    # test loading from a binary
+
+    from_binary = pload("/usr/lib/i386-linux-gnu/libc.so")
+    from_assembly = pload("../mprotect.S", text = True)
 
