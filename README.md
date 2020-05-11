@@ -41,10 +41,13 @@ See [the SDD](SDD.md).
 			- construct frames
 			- function arguments (maybe the input/output format
 				should be specialized?)
-		- ~~`chain`~~
-		- ~~`_decinc_reg_n`~~
-		- `_pop_reg_n`
+		- `chain`
+		- `_inc_reg_n`
+		- `_regassign`
 		- `mprotect`
+			- MUST treat subchains as containing mixed values
+				(e.g. bytes and integers (integers should be
+				interpreted as register contents))
 	- **test**
 
 # Sources

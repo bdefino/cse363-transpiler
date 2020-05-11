@@ -104,7 +104,12 @@ class Transpiler:
 
     @staticmethod
     def _regassign(*gadgetss, **regs):
-        """return a chain for assigning a value to a register"""
+        """
+        return a chain for assigning a value to a register;
+        these values MAY include miscellaneous types:
+        which should be interpreted as REGISTER CONTENTS
+        (endianness to be determined by the caller)
+        """
         chain = []
         matched = {}
         nregs = len(regs)
@@ -125,6 +130,7 @@ class Transpiler:
         # populate matched registers
 
         for reg, gadget in matched.items():
+            chain.append(gadget[0])
             chain.append(regs[reg])
 
         # populate unmatched registers incrementally
