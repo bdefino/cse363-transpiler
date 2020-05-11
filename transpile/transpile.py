@@ -215,11 +215,13 @@ class Transpiler:
                 pattern = ';'.join(["pop " + r for r in perm] + ["ret"])
                 gadget = Transpiler._first_matching_gadget(pattern, *gadgetss)
 
-                if gadget:
-                    for reg in perm:
-                        matched[reg] = gadget
-                        del unmatched[reg]
-                    nregs -= len(perm)
+                if not gadget:
+                    continue
+
+                for reg in perm:
+                    matched[reg] = gadget
+                    del unmatched[reg]
+                nregs -= len(perm)
             nregs -= 1
 
         # populate matched registers
