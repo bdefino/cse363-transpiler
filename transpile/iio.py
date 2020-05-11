@@ -27,7 +27,7 @@ class BaseInstructionIO:
         ```
         {
             "base": base,
-            "extent": analyze.CodeSegment/bytes/str,
+            "extent": analyze.CodeSegment/bytes,
             "instructions": iterable of capstone.CsInsn,
             "isa": ISA
         }
@@ -62,7 +62,7 @@ class BaseInstructionIO:
         raise NotImplementedError()
 
 class AssemblyIO(BaseInstructionIO):
-    """assembly deserialization"""
+    """assembly de/serialization"""
 
     @staticmethod
     def dump(fp, extent):
@@ -76,14 +76,14 @@ class AssemblyIO(BaseInstructionIO):
 
         # first, assemble
 
-        s = io.StringIO()
+        b = io.BytesIO()
         _extent = fp.read()
-        MachineCodeIO.dump(s, {"instructions": _extent, "isa": _isa})
-        s.seek(0, os.SEEK_SET)
+        MachineCodeIO.dump(b, {"instructions": _extent, "isa": _isa})
+        b.seek(0, os.SEEK_SET)
 
         # disassemble
 
-        extent = MachineCodeIO.load(s, _isa, offset)
+        extent = MachineCodeIO.load(b, _isa, offset)
         extent["extent"] = _extent
         return extent
 
@@ -102,7 +102,7 @@ class AssemblyIO(BaseInstructionIO):
             return AssemblyIO.load(fp, _isa, offset)
 
 class MachineCodeIO(AssemblyIO):
-    """machine code deserialization"""
+    """machine code de/serialization"""
 
     @staticmethod
     def dump(fp, extent):
@@ -179,7 +179,7 @@ class MachineCodeIO(AssemblyIO):
                 if isinstance(extents.get(extent.name, None), int) \
                 else extent.addr
             extents[extent.name] = MachineCodeIO.load(
-                o.BytesIO(extent.binary_arr), _isa, base}
+                io.BytesIO(extent.binary_arr), _isa, base)
 
         # filter out unmatched extents
 
