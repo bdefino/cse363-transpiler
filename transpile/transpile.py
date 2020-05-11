@@ -79,7 +79,7 @@ class Transpiler:
         return None
 
     @staticmethod
-    def _inc_reg_n(reg, n = 0, *gadgetss):
+    def _inc_reg_n(reg, n=0, *gadgetss):
         """incrementally fill a register"""
         if not set((True for g in gadgetss)) == {True}:
             raise TypeError("expected `gadget.Gadgets` instances")
@@ -89,7 +89,7 @@ class Transpiler:
         # zero out the register
 
         chain = [Transpiler._first_matching_gadget("xor %s, %s" % (reg, reg),
-                                                *gadgetss)]
+                                                   *gadgetss)]
 
         # fill the register
 
@@ -125,7 +125,7 @@ class Transpiler:
 
         # populate unmatched registers
 
-        while ##
+        while
 
     @staticmethod
     def mprotect_pop_reg_combo(a, b, c, d, *gadgetss):
@@ -185,13 +185,26 @@ class Transpiler:
         if not all(reg_d.values()):
             raise ValueError("pop reg failed")
 
-        # who is the odd one out
+        # push all reg_d values in a set
+        s = set()
+        for g in reg_d.items():
+            s.add(g)
 
-        ####
-        # fill in stack args
-        # double,triple,quad pops
+        for g in s:
+            # check the gagdet
+            chain += list(g[0])
+            lst = re.findall("e[a-d]x", g[1])
+            for e in lst:
+                if e == "eax":
+                    chain += list(struct.pack("<I", a))
+                if e == "ebx":
+                    chain += list(struct.pack("<I", b))
+                if e == "ecx":
+                    chain += list(struct.pack("<I", c))
+                if e == "edx":
+                    chain += list(struct.pack("<I", d))
 
-        return None
+        return chain
 
     @staticmethod
     def _pop_reg(reg, val, *gadgetss):
