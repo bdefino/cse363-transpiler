@@ -37,9 +37,9 @@ def correlate(isa):
         isa["keystone"] = {}
 
         if isa["capstone"]["arch"] == capstone.CS_ARCH_MIPS:
-            isa["keystone"] = keystone.KS_ARCH_MIPS
+            isa["keystone"]["arch"] = keystone.KS_ARCH_MIPS
         elif isa["capstone"]["arch"] == capstone.CS_ARCH_X86:
-            isa["keystone"] = keystone.KS_ARCH_X86
+            isa["keystone"]["arch"] = keystone.KS_ARCH_X86
         else:
             raise ValueError("unsupported architecture")
 
@@ -60,9 +60,9 @@ def correlate(isa):
         isa["capstone"] = {}
 
         if isa["keystone"]["arch"] == keystone.KS_ARCH_MIPS:
-            isa["capstone"] = capstone.CS_ARCH_MIPS
+            isa["capstone"]["arch"] = capstone.CS_ARCH_MIPS
         elif isa["keystone"]["arch"] == keystone.KS_ARCH_X86:
-            isa["capstone"] = capstone.CS_ARCH_X86
+            isa["capstone"]["arch"] = capstone.CS_ARCH_X86
         else:
             raise ValueError("unsupported architecture")
 
