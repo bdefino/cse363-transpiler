@@ -127,7 +127,7 @@ class Transpiler:
                     for reg in perm:
                         matched[reg] = gadget
                         del unmatched[reg]
-                        nregs -= 1
+                    nregs -= len(perm)
             nregs -= 1
 
         # populate matched registers
