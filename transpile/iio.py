@@ -61,7 +61,7 @@ class AssemblyIO(BaseInstructionIO):
         # first, assemble
 
         s = io.StringIO()
-        BaseInstructionIO.dump(s, fp.read())
+        BaseInstructionIO.dump(s, fp.read(), isa)
         s.seek(0, os.SEEK_SET)
 
         # disassemble
@@ -124,7 +124,7 @@ class MachineCodeIO(AssemblyIO):
 
         with open(path, "rb") as fp:
             binary = analyze.Binary(fp.read())
-
+        print({k: getattr(binary, k) for k in ("arch", "endianess", "mode")})
         # compute the complete ISA
 
         _isa = isa.correlate({
@@ -155,11 +155,15 @@ class MachineCodeIO(AssemblyIO):
 
         # filter out unmatched sections
 
-        return list(filter(lambda s: len(s.keys()) > 1, sections))
+        return {k: v for k, v in sections.items() if len(v.keys()) > 1}
 
 if __name__ == "__main__":
     # test loading from a binary
 
-    print(MachineCodeIO.ploadall("/usr/lib/i386-linux-gnu/libc.so"))
-    print(AssemblyIO.ploadall("../mprotect.S"))
+    print(MachineCodeIO.ploadall("../linux_32"))
+    print(AssemblyIO.pload("../setx.S", {
+        "arch": capstone.CS_ARCH_X86,
+        "endianness": capstone.CS_MODE_LITTLE_ENDIAN,
+        "mode": capstone.CS_MODE_32
+        }))
 
