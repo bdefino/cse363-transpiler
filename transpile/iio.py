@@ -18,97 +18,82 @@ except ImportError:
 __doc__ = "instruction de/serialization"
 
 class BaseInstructionIO:
-    """instruction de/serialization"""
+    """
+    instruction de/serialization
+
+    files are always expected to be in byte mode
+
+    instructions are formed in extents of the form:
+        ```
+        {
+            "base": base,
+            "extent": analyze.CodeSegment/bytes/str,
+            "instructions": iterable of capstone.CsInsn,
+            "isa": ISA
+        }
+        ```
+    and multiple extents are grouped like so:
+        `{name: extent}`
+    """
 
     @staticmethod
-    def dump(fp, instructions, _isa):
-        """dump instructions (`capstone.CsInsn/bytes/str`s) to a file"""
-        _isa = isa.correlate(copy.deepcopy(_isa))
-        return keystone.Ks(_isa["keystone"]["arch"],
-            _isa["keystone"]["endianness"] + _isa["keystone"]["mode"]).asm(
-                instructions)
+    def dump(fp, extent):
+        """load a single executable extent to a file"""
+        raise NotImplementedError()
 
     @staticmethod
     def load(fp, _isa, offset = 0):
-        """load `capstone.CsInsn`s from a file (given an offset)"""
+        """load a single executable extent from a file"""
+        raise NotImplementedError()
+
+    @staticmethod
+    def pdump(path, extent):
+        """dump a single executable extent to a path"""
         raise NotImplementedError()
 
     @staticmethod
     def pload(path, _isa, offset = 0):
-        """
-        load a single executable extent at a path
-
-        input extents are of the form `{name: base}`
-
-        output is of the form
-            ```
-            {
-                "base": base,
-                "extent": analyze.CodeSegment/bytes/str,
-                "instructions": iterable of capstone.CsInsn,
-                "isa": ISA
-            }
-            ```
-        """
+        """load a single executable extent at a path"""
         raise NotImplementedError()
 
     @staticmethod
     def ploadall(path, extents = None):
-        """
-        load all executable extents at a path
-
-        input extents are of the form `{name: base}`
-
-        output is of the form
-            ```
-            {
-                extent (extent or segment): {
-                    "base": base,
-                    "extent": analyze.CodeSegment/bytes/str,
-                    "instructions": iterable of capstone.CsInsn,
-                    "isa": ISA
-                },
-                ....
-            }
-            ```
-        """
+        """load all executable extents at a path"""
         raise NotImplementedError()
 
 class AssemblyIO(BaseInstructionIO):
     """assembly deserialization"""
 
     @staticmethod
+    def dump(fp, extent):
+        """load a single executable extent to a file"""
+        fp.write(b'\n'.join((bytes(i.mnemonic)
+            for i in extent["instructions"])))
+
+    @staticmethod
     def load(fp, _isa, offset = 0):
-        """load `capstone.CsInsn`s from a file (given an offset)"""
+        """load a single executable extent from a file"""
         _isa = isa.correlate(copy.deepcopy(_isa))
 
         # first, assemble
 
         s = io.StringIO()
-        BaseInstructionIO.dump(s, fp.read(), _isa)
+        AssemblyIO.dump(s, fp.read(), _isa)
         s.seek(0, os.SEEK_SET)
 
-        # d_isassemble
+        # disassemble
 
         return MachineCodeIO.load(s, _isa, offset)
 
     @staticmethod
+    def pdump(path, extent):
+        """dump a single executable extent to a path"""
+        with open(path, "wb") as fp:
+            AssemblyIO.dump(fp, extent)
+
+    @staticmethod
     def pload(path, _isa, offset = 0):
-        """
-        load a single executable extent at a path
-
-        input extents are of the form `{name: base}`
-
-        output is of the form
-            ```
-            {
-                "base": base,
-                "extent": analyze.CodeSegment/bytes/str,
-                "instructions": iterable of capstone.CsInsn,
-                "isa": ISA
-            }
-            ```
-        """
+        """load a single executable extent at a path"""
         _isa = isa.correlate(copy.deepcopy(_isa))
 
         with open(path) as fp:
@@ -118,62 +103,47 @@ class MachineCodeIO(AssemblyIO):
     """machine code deserialization"""
 
     @staticmethod
+    def dump(fp, extent):
+        """load a single executable extent to a file"""
+        _isa = isa.correlate(copy.deepcopy(extent["isa"]))
+        return keystone.Ks(_isa["keystone"]["arch"],
+            _isa["keystone"]["endianness"] + _isa["keystone"]["mode"]).asm(
+                extent["instructions"])
+
+    @staticmethod
     def load(fp, _isa, offset = 0):
-        """load `capstone.CsInsn`s from a file (given an offset)"""
+        """load a single executable extent from a file"""
         _isa = isa.correlate(copy.deepcopy(_isa))
-        return capstone.Cs(_isa["capstone"]["arch"],
-            _isa["capstone"]["endianness"] + _isa["capstone"]["mode"]).disasm(
-                fp.read(), offset)
+        return {
+                "base": offset,
+                "extent": extent,
+                "instructions": capstone.Cs(_isa["capstone"]["arch"],
+                    _isa["capstone"]["endianness"]
+                        + _isa["capstone"]["mode"]).disasm(fp.read(), offset),
+                "isa": _isa
+            }
+
+    @staticmethod
+    def pdump(path, extent):
+        """load a single executable extent to a path"""
+        _isa = isa.correlate(copy.deepcopy(extent["isa"]))
+
+        with open(path) as fp:
+            return MachineCodeIO.dump(fp, extent)
 
     @staticmethod
     def pload(path, _isa, offset = 0):
-        """
-        load a single executable extent at a path
-
-        input extents are of the form `{name: base}`
-
-        output is of the form
-            ```
-            {
-                "base": base,
-                "extent": analyze.CodeSegment/bytes/str,
-                "instructions": iterable of capstone.CsInsn,
-                "isa": ISA
-            }
-            ```
-        """
+        """load a single executable extent at a path"""
         _isa = isa.correlate(copy.deepcopy(_isa))
 
         with open(path, "rb") as fp:
             extent = fp.read()
             fp.seek(0, os.SEEK_SET)
-            return {
-                "base": offset,
-                "extent": extent,
-                "instructions": MachineCodeIO.load(fp, _isa, offset),
-                "isa": _isa
-            }
+            return 
 
     @staticmethod
     def ploadall(path, extents = None):
-        """
-        load all executable extents at a path
-
-        input extents are of the form `{name: base}`
-
-        output is of the form
-            ```
-            {
-                extent (extent or segment): {
-                    "base": base,
-                    "extent": analyze.CodeSegment/bytes/str,
-                    "instructions": iterable of capstone.CsInsn,
-                    "isa": ISA
-                },
-                ....
-            }
-            ```
-        """
+        """load all executable extents at a path"""
 
         # load the binary
 
@@ -187,8 +157,7 @@ class MachineCodeIO(AssemblyIO):
                 "arch": binary.arch,
                 "endianness": binary.endianess,
                 "mode": binary.mode
-            }
-        })
+            }})
 
         # load extents
 
@@ -220,4 +189,8 @@ if __name__ == "__main__":
     source = AssemblyIO.pload("../x86-32-little.S", isa.parse("x86-32-little"))
     print(source)
     print([source["extent"]])
+
+    with os.fdopen(sys.stdin.fileno(), "wb") as fp:
+        AssemblyIO.dump(fp, source)
+        MachineCodeIO.dump(fp, source)
 
