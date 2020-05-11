@@ -1,7 +1,8 @@
 import capstone
 import io
-import struct
+import itertools
 import re
+import struct
 
 try:
     from . import gadget, iio, verbosity
@@ -75,14 +76,11 @@ class Transpiler:
 
             if g is not None:
                 return gadget
-        raise ValueError("no `%s` gadget" % pattern)
+        return None
 
     @staticmethod
-    def _mov_reg_n(reg, n=0, *gadgetss):
-        """
-        generate gadgets (from a collection of `gadget.Gadgets` instances) for
-        moving a particular value into a register
-        """
+    def _inc_reg_n(reg, n = 0, *gadgetss):
+        """incrementally fill a register"""
         if not set((True for g in gadgetss)) == {True}:
             raise TypeError("expected `gadget.Gadgets` instances")
 
@@ -90,8 +88,8 @@ class Transpiler:
             raise TypeError("expected an integer")
         # zero out the register
 
-        yield Transpiler._first_matching_gadget("xor %s, %s" % (reg, reg),
-                                                *gadgetss)
+        chain = [Transpiler._first_matching_gadget("xor %s, %s" % (reg, reg),
+                                                *gadgetss)]
 
         # fill the register
 
@@ -100,8 +98,34 @@ class Transpiler:
         increment = -1 if n < 0 else 1
 
         while n:
-            yield gadget
+            chain.append(gadget)
             n -= increment
+        return chain
+
+    @staticmethod
+    def _regassign(*gadgetss, **regs):
+        """"""
+        chain = []
+        gadgets = set()
+        nregs = len(regs)
+        regs = regs.clone()
+
+        while nregs > 0:
+            for perm in itertools.permutations(regs.keys(), nregs):
+                pattern = ';'.join(["pop " + r for r in perm] + ["ret"])
+                g = Transpiler._first_matching_gadget(pattern, *gadgetss)
+
+                if g:
+                    gadgets.add(g)
+
+                    for reg in perm:
+                        del gadgets[reg]
+                        nregs -= 1
+            nregs -= 1
+
+        # populate unmatched registers
+
+        while ##
 
     @staticmethod
     def mprotect_pop_reg_combo(a, b, c, d, *gadgetss):
@@ -114,7 +138,7 @@ class Transpiler:
         reg_d = {"eax": None,
                  "ebx": None,
                  "ecx": None,
-                 "edx": None, }
+                 "edx": None}
 
         # load the pool
 

@@ -26,6 +26,7 @@ See [the SDD](SDD.md).
 	- ~~`binary`~~
 	- ~~`correlate`~~
 	- ~~`parse`~~
+	- **test**
 - `__main__`
 	- `main`
 		- ~~adapt to `mprotect` interface~~
@@ -36,14 +37,13 @@ See [the SDD](SDD.md).
 	- `Transpiler`
 		- rethink `__init__` interface (move args to `__call__`?)
 		- `__call__`
-			- obtain gadgets
+			- ~~obtain gadgets~~
 			- construct frames
 			- function arguments (maybe the input/output format
 				should be specialized?)
 		- ~~`chain`~~
-		- `_mov_reg_n`
-			- ~~primary option for register loading: `pop REG`~~
-				~~- secondary option: addition~~
+		- ~~`_decinc_reg_n`~~
+		- `_pop_reg_n`
 		- `mprotect`
 	- **test**
 
