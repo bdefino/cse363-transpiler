@@ -1,6 +1,7 @@
 import capstone
 import io
 import struct
+import re
 
 try:
     from . import gadget, iio, verbosity
@@ -103,6 +104,71 @@ class Transpiler:
             n -= increment
 
     @staticmethod
+    def mprotect_pop_reg_combo(a, b, c, d, *gadgetss):
+        """
+        generate rop chain to pop a value from the payload to regs
+        [eax, ebx, ecx, edx]
+        in any combination
+        """
+        chain = []
+        reg_d = {"eax": None,
+                 "ebx": None,
+                 "ecx": None,
+                 "edx": None, }
+
+        # load the pool
+
+        # check for single pop
+        for c in POP_REG_COMBO_POOL["single"]:
+            for g in gadgetss:
+                gadget = g.search(c)
+                if gadget:
+                    re_output = re.findall("e[a-d]x", gadget[1])
+                    if re_output:
+                        reg_d[re_output[0]] = gadget
+
+        # check for double pop
+        for c in POP_REG_COMBO_POOL["double"]:
+            for g in gadgetss:
+                gadget = g.search(c)
+                if gadget:
+                    re_output = re.findall("e[a-d]x", gadget[1])
+                    if re_output:
+                        for reg in re_output:
+                            reg_d[reg] = gadget
+
+        # check for triple pop
+        for c in POP_REG_COMBO_POOL["triple"]:
+            for g in gadgetss:
+                gadget = g.search(c)
+                if gadget:
+                    re_output = re.findall("e[a-d]x", gadget[1])
+                    if re_output:
+                        for reg in re_output:
+                            reg_d[reg] = gadget
+
+        # check for quad pop
+        for c in POP_REG_COMBO_POOL["quad"]:
+            for g in gadgetss:
+                gadget = g.search(c)
+                if gadget:
+                    re_output = re.findall("e[a-d]x", gadget[1])
+                    if re_output:
+                        for reg in re_output:
+                            reg_d[reg] = gadget
+
+        # check for odd ones out
+        if not all(reg_d.values()):
+            raise ValueError("pop reg failed")
+
+        # who is the odd one out
+
+        ####
+        # fill in stack args
+
+        return None
+
+    @staticmethod
     def _pop_reg(reg, val, *gadgetss):
         if not set((True for g in gadgetss)) == {True}:
             raise TypeError("expected `gadget.Gadgets` instances")
@@ -129,7 +195,7 @@ class Transpiler:
         """
         if not all(([o.isa] == objs[:1] for o in objs[1:])):
             raise TypeError("ISA mismatch")
-        #########################################################################################per-ISA discrimination
+        # per-ISA discrimination
         for k, v in ("buf", "buflen", "rop"):
             if not "buf" in kwargs:
                 raise KeyError("expected \"%s\" in `kwargs`" % k)
@@ -163,7 +229,7 @@ class Transpiler:
             # `mov ebx, (ROP)`
 
             chain += list(Transpiler._mov_reg_n("ebx", kwargs["rop"],
-                *gadgetss))
+                                                *gadgetss))
 
         try:
             # `pop ecx`
@@ -172,7 +238,7 @@ class Transpiler:
             # `mov ecx, (BUFLEN)`
 
             chain += list(Transpiler._mov_reg_n("ecx", kwargs["buflen"],
-                                            *gadgetss))
+                                                *gadgetss))
 
         try:
             # `pop edx`
@@ -197,3 +263,79 @@ if __name__ == "__main__":
 
     with os.fdopen(sys.stdout.fileno(), "wb") as fp:
         fp.write(chain)
+
+
+POP_REG_COMBO_POOL = {
+    "single": [
+        "pop eax; ret;",
+        "pop ebx; ret;",
+        "pop ecx; ret;",
+        "pop edx; ret;"
+    ],
+    "double": [
+        "pop eax; pop ebx; ret;",
+        "pop eax; pop ecx; ret;",
+        "pop eax; pop edx; ret;",
+        "pop ebx; pop eax; ret;",
+        "pop ebx; pop ecx; ret;",
+        "pop ebx; pop edx; ret;",
+        "pop ecx; pop eax; ret;",
+        "pop ecx; pop ebx; ret;",
+        "pop ecx; pop edx; ret;",
+        "pop edx; pop eax; ret;",
+        "pop edx; pop ebx; ret;",
+        "pop edx; pop ecx; ret;"
+    ],
+    "triple": [
+        "pop eax; pop ebx; pop ecx; ret;",
+        "pop eax; pop ebx; pop edx; ret;",
+        "pop eax; pop ecx; pop ebx; ret;",
+        "pop eax; pop ecx; pop edx; ret;",
+        "pop eax; pop edx; pop ecx; ret;",
+        "pop eax; pop edx; pop ebx; ret;",
+        "pop ebx; pop ecx; pop edx; ret;",
+        "pop ebx; pop ecx; pop eax; ret;",
+        "pop ebx; pop edx; pop eax; ret;",
+        "pop ebx; pop edx; pop ecx; ret;",
+        "pop ebx; pop eax; pop ecx; ret;",
+        "pop ebx; pop eax; pop edx; ret;",
+        "pop ecx; pop edx; pop eax; ret;",
+        "pop ecx; pop edx; pop ebx; ret;",
+        "pop ecx; pop eax; pop ebx; ret;",
+        "pop ecx; pop eax; pop edx; ret;",
+        "pop ecx; pop ebx; pop edx; ret;",
+        "pop ecx; pop ebx; pop eax; ret;",
+        "pop edx; pop eax; pop ebx; ret;",
+        "pop edx; pop eax; pop ecx; ret;",
+        "pop edx; pop ebx; pop ecx; ret;",
+        "pop edx; pop ebx; pop eax; ret;",
+        "pop edx; pop ecx; pop ebx; ret;",
+        "pop edx; pop ecx; pop eax; ret;"
+    ],
+    "quad": [
+        "pop eax; pop ebx; pop ecx; pop edx; ret;",
+        "pop eax; pop ebx; pop edx; pop ecx; ret;",
+        "pop eax; pop ecx; pop ebx; pop edx; ret;",
+        "pop eax; pop ecx; pop edx; pop ebx; ret;",
+        "pop eax; pop edx; pop ebx; pop ecx; ret;",
+        "pop eax; pop edx; pop ecx; pop ebx; ret;",
+        "pop ebx; pop eax; pop ecx; pop edx; ret;",
+        "pop ebx; pop eax; pop edx; pop ecx; ret;",
+        "pop ebx; pop edx; pop eax; pop ecx; ret;",
+        "pop ebx; pop edx; pop ecx; pop eax; ret;",
+        "pop ebx; pop ecx; pop eax; pop edx; ret;",
+        "pop ebx; pop ecx; pop edx; pop eax; ret;",
+        "pop ecx; pop eax; pop ebx; pop edx; ret;",
+        "pop ecx; pop eax; pop edx; pop ebx; ret;",
+        "pop ecx; pop ebx; pop eax; pop edx; ret;",
+        "pop ecx; pop ebx; pop edx; pop eax; ret;",
+        "pop ecx; pop edx; pop eax; pop ebx; ret;",
+        "pop ecx; pop edx; pop ebx; pop eax; ret;",
+        "pop edx; pop eax; pop ebx; pop ecx; ret;",
+        "pop edx; pop eax; pop ecx; pop ebx; ret;",
+        "pop edx; pop ebx; pop eax; pop ecx; ret;",
+        "pop edx; pop ebx; pop ecx; pop eax; ret;",
+        "pop edx; pop ecx; pop eax; pop ebx; ret;",
+        "pop edx; pop ecx; pop ebx; pop eax; ret;"
+    ]
+}
