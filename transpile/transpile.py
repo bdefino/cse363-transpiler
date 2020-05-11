@@ -99,6 +99,7 @@ class Transpiler:
         return whether there's a mismatch between the ISAs of extents across a
         collection of objects
         """
+        print(itertools.chain((e["isa"] for e in o) for o in objs))
         return len(set(itertools.chain(((e["isa"] for e in o)
             for o in objs)))) > 1
 
