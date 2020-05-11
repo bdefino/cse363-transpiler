@@ -15,6 +15,81 @@ except ImportError:
     import gadget
     import iio
 
+POP_REG_COMBO_POOL = {
+    "single": [
+        "pop eax; ret;",
+        "pop ebx; ret;",
+        "pop ecx; ret;",
+        "pop edx; ret;"
+    ],
+    "double": [
+        "pop eax; pop ebx; ret;",
+        "pop eax; pop ecx; ret;",
+        "pop eax; pop edx; ret;",
+        "pop ebx; pop eax; ret;",
+        "pop ebx; pop ecx; ret;",
+        "pop ebx; pop edx; ret;",
+        "pop ecx; pop eax; ret;",
+        "pop ecx; pop ebx; ret;",
+        "pop ecx; pop edx; ret;",
+        "pop edx; pop eax; ret;",
+        "pop edx; pop ebx; ret;",
+        "pop edx; pop ecx; ret;"
+    ],
+    "triple": [
+        "pop eax; pop ebx; pop ecx; ret;",
+        "pop eax; pop ebx; pop edx; ret;",
+        "pop eax; pop ecx; pop ebx; ret;",
+        "pop eax; pop ecx; pop edx; ret;",
+        "pop eax; pop edx; pop ecx; ret;",
+        "pop eax; pop edx; pop ebx; ret;",
+        "pop ebx; pop ecx; pop edx; ret;",
+        "pop ebx; pop ecx; pop eax; ret;",
+        "pop ebx; pop edx; pop eax; ret;",
+        "pop ebx; pop edx; pop ecx; ret;",
+        "pop ebx; pop eax; pop ecx; ret;",
+        "pop ebx; pop eax; pop edx; ret;",
+        "pop ecx; pop edx; pop eax; ret;",
+        "pop ecx; pop edx; pop ebx; ret;",
+        "pop ecx; pop eax; pop ebx; ret;",
+        "pop ecx; pop eax; pop edx; ret;",
+        "pop ecx; pop ebx; pop edx; ret;",
+        "pop ecx; pop ebx; pop eax; ret;",
+        "pop edx; pop eax; pop ebx; ret;",
+        "pop edx; pop eax; pop ecx; ret;",
+        "pop edx; pop ebx; pop ecx; ret;",
+        "pop edx; pop ebx; pop eax; ret;",
+        "pop edx; pop ecx; pop ebx; ret;",
+        "pop edx; pop ecx; pop eax; ret;"
+    ],
+    "quad": [
+        "pop eax; pop ebx; pop ecx; pop edx; ret;",
+        "pop eax; pop ebx; pop edx; pop ecx; ret;",
+        "pop eax; pop ecx; pop ebx; pop edx; ret;",
+        "pop eax; pop ecx; pop edx; pop ebx; ret;",
+        "pop eax; pop edx; pop ebx; pop ecx; ret;",
+        "pop eax; pop edx; pop ecx; pop ebx; ret;",
+        "pop ebx; pop eax; pop ecx; pop edx; ret;",
+        "pop ebx; pop eax; pop edx; pop ecx; ret;",
+        "pop ebx; pop edx; pop eax; pop ecx; ret;",
+        "pop ebx; pop edx; pop ecx; pop eax; ret;",
+        "pop ebx; pop ecx; pop eax; pop edx; ret;",
+        "pop ebx; pop ecx; pop edx; pop eax; ret;",
+        "pop ecx; pop eax; pop ebx; pop edx; ret;",
+        "pop ecx; pop eax; pop edx; pop ebx; ret;",
+        "pop ecx; pop ebx; pop eax; pop edx; ret;",
+        "pop ecx; pop ebx; pop edx; pop eax; ret;",
+        "pop ecx; pop edx; pop eax; pop ebx; ret;",
+        "pop ecx; pop edx; pop ebx; pop eax; ret;",
+        "pop edx; pop eax; pop ebx; pop ecx; ret;",
+        "pop edx; pop eax; pop ecx; pop ebx; ret;",
+        "pop edx; pop ebx; pop eax; pop ecx; ret;",
+        "pop edx; pop ebx; pop ecx; pop eax; ret;",
+        "pop edx; pop ecx; pop eax; pop ebx; ret;",
+        "pop edx; pop ecx; pop ebx; pop eax; ret;"
+    ]
+}
+
 
 class Transpiler:
     """transpilation base"""
@@ -285,9 +360,9 @@ class Transpiler:
         gadgetss = set()
 
         for o in objs:
-                for e in o.values():
-                    e["gadgets"] = gadget.Gadgets(e["instructions"])
-                    gadgetss.add(e["gadgets"])
+            for e in o.values():
+                e["gadgets"] = gadget.Gadgets(e["instructions"])
+                gadgetss.add(e["gadgets"])
 
         # create chain
 
@@ -337,78 +412,3 @@ if __name__ == "__main__":
     with os.fdopen(sys.stdout.fileno(), "wb") as fp:
         fp.write(chain)
 
-
-POP_REG_COMBO_POOL = {
-    "single": [
-        "pop eax; ret;",
-        "pop ebx; ret;",
-        "pop ecx; ret;",
-        "pop edx; ret;"
-    ],
-    "double": [
-        "pop eax; pop ebx; ret;",
-        "pop eax; pop ecx; ret;",
-        "pop eax; pop edx; ret;",
-        "pop ebx; pop eax; ret;",
-        "pop ebx; pop ecx; ret;",
-        "pop ebx; pop edx; ret;",
-        "pop ecx; pop eax; ret;",
-        "pop ecx; pop ebx; ret;",
-        "pop ecx; pop edx; ret;",
-        "pop edx; pop eax; ret;",
-        "pop edx; pop ebx; ret;",
-        "pop edx; pop ecx; ret;"
-    ],
-    "triple": [
-        "pop eax; pop ebx; pop ecx; ret;",
-        "pop eax; pop ebx; pop edx; ret;",
-        "pop eax; pop ecx; pop ebx; ret;",
-        "pop eax; pop ecx; pop edx; ret;",
-        "pop eax; pop edx; pop ecx; ret;",
-        "pop eax; pop edx; pop ebx; ret;",
-        "pop ebx; pop ecx; pop edx; ret;",
-        "pop ebx; pop ecx; pop eax; ret;",
-        "pop ebx; pop edx; pop eax; ret;",
-        "pop ebx; pop edx; pop ecx; ret;",
-        "pop ebx; pop eax; pop ecx; ret;",
-        "pop ebx; pop eax; pop edx; ret;",
-        "pop ecx; pop edx; pop eax; ret;",
-        "pop ecx; pop edx; pop ebx; ret;",
-        "pop ecx; pop eax; pop ebx; ret;",
-        "pop ecx; pop eax; pop edx; ret;",
-        "pop ecx; pop ebx; pop edx; ret;",
-        "pop ecx; pop ebx; pop eax; ret;",
-        "pop edx; pop eax; pop ebx; ret;",
-        "pop edx; pop eax; pop ecx; ret;",
-        "pop edx; pop ebx; pop ecx; ret;",
-        "pop edx; pop ebx; pop eax; ret;",
-        "pop edx; pop ecx; pop ebx; ret;",
-        "pop edx; pop ecx; pop eax; ret;"
-    ],
-    "quad": [
-        "pop eax; pop ebx; pop ecx; pop edx; ret;",
-        "pop eax; pop ebx; pop edx; pop ecx; ret;",
-        "pop eax; pop ecx; pop ebx; pop edx; ret;",
-        "pop eax; pop ecx; pop edx; pop ebx; ret;",
-        "pop eax; pop edx; pop ebx; pop ecx; ret;",
-        "pop eax; pop edx; pop ecx; pop ebx; ret;",
-        "pop ebx; pop eax; pop ecx; pop edx; ret;",
-        "pop ebx; pop eax; pop edx; pop ecx; ret;",
-        "pop ebx; pop edx; pop eax; pop ecx; ret;",
-        "pop ebx; pop edx; pop ecx; pop eax; ret;",
-        "pop ebx; pop ecx; pop eax; pop edx; ret;",
-        "pop ebx; pop ecx; pop edx; pop eax; ret;",
-        "pop ecx; pop eax; pop ebx; pop edx; ret;",
-        "pop ecx; pop eax; pop edx; pop ebx; ret;",
-        "pop ecx; pop ebx; pop eax; pop edx; ret;",
-        "pop ecx; pop ebx; pop edx; pop eax; ret;",
-        "pop ecx; pop edx; pop eax; pop ebx; ret;",
-        "pop ecx; pop edx; pop ebx; pop eax; ret;",
-        "pop edx; pop eax; pop ebx; pop ecx; ret;",
-        "pop edx; pop eax; pop ecx; pop ebx; ret;",
-        "pop edx; pop ebx; pop eax; pop ecx; ret;",
-        "pop edx; pop ebx; pop ecx; pop eax; ret;",
-        "pop edx; pop ecx; pop eax; pop ebx; ret;",
-        "pop edx; pop ecx; pop ebx; pop eax; ret;"
-    ]
-}
