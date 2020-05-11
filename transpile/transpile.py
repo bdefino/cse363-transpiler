@@ -99,9 +99,9 @@ class Transpiler:
         return whether there's a mismatch between the ISAs of extents across a
         collection of objects
         """
-        print(list(itertools.chain((e["isa"] for e in o) for o in objs)))
-        return len(set(itertools.chain(((e["isa"] for e in o)
-            for o in objs)))) > 1
+        print(list(itertools.chain([[e["isa"] for e in o] for o in objs])))
+        return len(set(itertools.chain([[e["isa"] for e in o]
+            for o in objs]))) > 1
 
     @staticmethod
     def _reg_assign(*gadgetss, **regs):
