@@ -15,6 +15,81 @@ except ImportError:
     import gadget
     import iio
 
+POP_REG_COMBO_POOL = {
+    "single": [
+        "pop eax; ret;",
+        "pop ebx; ret;",
+        "pop ecx; ret;",
+        "pop edx; ret;"
+    ],
+    "double": [
+        "pop eax; pop ebx; ret;",
+        "pop eax; pop ecx; ret;",
+        "pop eax; pop edx; ret;",
+        "pop ebx; pop eax; ret;",
+        "pop ebx; pop ecx; ret;",
+        "pop ebx; pop edx; ret;",
+        "pop ecx; pop eax; ret;",
+        "pop ecx; pop ebx; ret;",
+        "pop ecx; pop edx; ret;",
+        "pop edx; pop eax; ret;",
+        "pop edx; pop ebx; ret;",
+        "pop edx; pop ecx; ret;"
+    ],
+    "triple": [
+        "pop eax; pop ebx; pop ecx; ret;",
+        "pop eax; pop ebx; pop edx; ret;",
+        "pop eax; pop ecx; pop ebx; ret;",
+        "pop eax; pop ecx; pop edx; ret;",
+        "pop eax; pop edx; pop ecx; ret;",
+        "pop eax; pop edx; pop ebx; ret;",
+        "pop ebx; pop ecx; pop edx; ret;",
+        "pop ebx; pop ecx; pop eax; ret;",
+        "pop ebx; pop edx; pop eax; ret;",
+        "pop ebx; pop edx; pop ecx; ret;",
+        "pop ebx; pop eax; pop ecx; ret;",
+        "pop ebx; pop eax; pop edx; ret;",
+        "pop ecx; pop edx; pop eax; ret;",
+        "pop ecx; pop edx; pop ebx; ret;",
+        "pop ecx; pop eax; pop ebx; ret;",
+        "pop ecx; pop eax; pop edx; ret;",
+        "pop ecx; pop ebx; pop edx; ret;",
+        "pop ecx; pop ebx; pop eax; ret;",
+        "pop edx; pop eax; pop ebx; ret;",
+        "pop edx; pop eax; pop ecx; ret;",
+        "pop edx; pop ebx; pop ecx; ret;",
+        "pop edx; pop ebx; pop eax; ret;",
+        "pop edx; pop ecx; pop ebx; ret;",
+        "pop edx; pop ecx; pop eax; ret;"
+    ],
+    "quad": [
+        "pop eax; pop ebx; pop ecx; pop edx; ret;",
+        "pop eax; pop ebx; pop edx; pop ecx; ret;",
+        "pop eax; pop ecx; pop ebx; pop edx; ret;",
+        "pop eax; pop ecx; pop edx; pop ebx; ret;",
+        "pop eax; pop edx; pop ebx; pop ecx; ret;",
+        "pop eax; pop edx; pop ecx; pop ebx; ret;",
+        "pop ebx; pop eax; pop ecx; pop edx; ret;",
+        "pop ebx; pop eax; pop edx; pop ecx; ret;",
+        "pop ebx; pop edx; pop eax; pop ecx; ret;",
+        "pop ebx; pop edx; pop ecx; pop eax; ret;",
+        "pop ebx; pop ecx; pop eax; pop edx; ret;",
+        "pop ebx; pop ecx; pop edx; pop eax; ret;",
+        "pop ecx; pop eax; pop ebx; pop edx; ret;",
+        "pop ecx; pop eax; pop edx; pop ebx; ret;",
+        "pop ecx; pop ebx; pop eax; pop edx; ret;",
+        "pop ecx; pop ebx; pop edx; pop eax; ret;",
+        "pop ecx; pop edx; pop eax; pop ebx; ret;",
+        "pop ecx; pop edx; pop ebx; pop eax; ret;",
+        "pop edx; pop eax; pop ebx; pop ecx; ret;",
+        "pop edx; pop eax; pop ecx; pop ebx; ret;",
+        "pop edx; pop ebx; pop eax; pop ecx; ret;",
+        "pop edx; pop ebx; pop ecx; pop eax; ret;",
+        "pop edx; pop ecx; pop eax; pop ebx; ret;",
+        "pop edx; pop ecx; pop ebx; pop eax; ret;"
+    ]
+}
+
 
 class Transpiler:
     """transpilation base"""
@@ -32,14 +107,17 @@ class Transpiler:
 
         objs = [iio.pload(o) for o in objs]  # load all objects from disk
 
-        if not all(([o.isa] == objs[:1] for o in objs[1:])):
+        if Transpiler._isa_mismatch():
             raise TypeError("ISA mismatch")
 
         # populate gadgets
 
+        gadgetss = set()
+
         for o in objs:
-            objs[o]["gadgets"] = gadget.Gadgets(o["instructions"])
-        gadgetss = [o["gadgets"] for o in objs]
+            for e in o.values():
+                e["gadgets"] = gadget.Gadgets(o["instructions"])
+                gadgetss.add(e["gadgets"])
 
         # search for corresponding gadgets
 
@@ -54,7 +132,7 @@ class Transpiler:
         """establish a predefined ROP chain"""
         chains = {"mprotect": Transpiler.mprotect}
 
-        if not all(([o.isa] == objs[:1] for o in objs[1:])):
+        if Transpiler._isa_mismatch(*objs):
             raise TypeError("ISA mismatch")
 
         if which in chains:
@@ -67,9 +145,6 @@ class Transpiler:
         return the first matching gadget from a list of `gadget.Gadgets`
         instances
         """
-        if not set((True for g in gadgetss)) == {True}:
-            raise TypeError("expected `gadget.Gadgets` instances")
-
         for g in gadgetss:
             gadget = g.search(pattern)
 
@@ -80,11 +155,6 @@ class Transpiler:
     @staticmethod
     def _inc_reg_n(reg, n=0, *gadgetss):
         """incrementally fill a register"""
-        if not set((True for g in gadgetss)) == {True}:
-            raise TypeError("expected `gadget.Gadgets` instances")
-
-        if not isinstance(n, int):
-            raise TypeError("expected an integer")
         # zero out the register
 
         chain = [Transpiler._first_matching_gadget("xor %s, %s" % (reg, reg),
@@ -102,7 +172,30 @@ class Transpiler:
         return chain
 
     @staticmethod
-    def _regassign(*gadgetss, **regs):
+    def _isa_mismatch(*objs):
+        """
+        return whether there's a mismatch between the ISAs of extents across a
+        collection of objects
+        """
+        if not objs:
+            return False
+        isas = []
+
+        for o in objs:
+            for e in o:
+                if "isa" in e:
+                    isas.append(e["isa"])
+
+        if not isas:
+            return False
+
+        for isa in isas[1:]:
+            if not isa == isas[0]:
+                return True
+        return False
+
+    @staticmethod
+    def _reg_assign(*gadgetss, **regs):
         """
         return a chain for assigning a value to a register;
         these values MAY include miscellaneous types:
@@ -228,9 +321,6 @@ class Transpiler:
 
     @staticmethod
     def _pop_reg(reg, val, *gadgetss):
-        if not set((True for g in gadgetss)) == {True}:
-            raise TypeError("expected `gadget.Gadgets` instances")
-
         # convert val to bytes
         ##################################################################
         # need endianess; default little x86
@@ -251,21 +341,28 @@ class Transpiler:
         generate an `mprotect` ROP chain
         (expects "buf", "buflen", and "rop" in `kwargs`)
         """
-        if not all(([o.isa] == objs[:1] for o in objs[1:])):
+        if Transpiler._isa_mismatch(*objs):
             raise TypeError("ISA mismatch")
+
         # per-ISA discrimination
-        for k, v in ("buf", "buflen", "rop"):
-            if not "buf" in kwargs:
+
+        ################################################################################
+
+        for k in ("buf", "buflen", "rop"):
+            if not k in kwargs:
                 raise KeyError("expected \"%s\" in `kwargs`" % k)
-            elif not isinstance(v, int):
+            elif not isinstance(kwargs[k], int):
                 raise KeyError(
                     "expected `kwargs[\"%s\"]` to be a positive integer" % k)
 
         # load all gadgets
 
+        gadgetss = set()
+
         for o in objs:
-            o["gadgets"] = gadget.Gadgets(o["instructions"])
-        gadgetss = [o["gadgets"] for o in objs]
+            for e in o.values():
+                e["gadgets"] = gadget.Gadgets(e["instructions"])
+                gadgetss.add(e["gadgets"])
 
         # create chain
 
@@ -308,84 +405,10 @@ if __name__ == "__main__":
     # localized: `os` and `sys` were already imported;
     # generate an `mprotect` chain for x86-32 Linux
 
+    sys.argv += ["../linux_32"]
     chain = Transpiler.chain("mprotect", buf=0xEEEEEEEE, buflen=0xFFFFFFFF,
-                             rop=-0x1, *[iio.pload(p) for p in sys.argv[1:]])
+                             rop=-0x1, *[iio.MachineCodeIO.ploadall(p) for p in sys.argv[1:]])
 
     with os.fdopen(sys.stdout.fileno(), "wb") as fp:
         fp.write(chain)
 
-
-POP_REG_COMBO_POOL = {
-    "single": [
-        "pop eax; ret;",
-        "pop ebx; ret;",
-        "pop ecx; ret;",
-        "pop edx; ret;"
-    ],
-    "double": [
-        "pop eax; pop ebx; ret;",
-        "pop eax; pop ecx; ret;",
-        "pop eax; pop edx; ret;",
-        "pop ebx; pop eax; ret;",
-        "pop ebx; pop ecx; ret;",
-        "pop ebx; pop edx; ret;",
-        "pop ecx; pop eax; ret;",
-        "pop ecx; pop ebx; ret;",
-        "pop ecx; pop edx; ret;",
-        "pop edx; pop eax; ret;",
-        "pop edx; pop ebx; ret;",
-        "pop edx; pop ecx; ret;"
-    ],
-    "triple": [
-        "pop eax; pop ebx; pop ecx; ret;",
-        "pop eax; pop ebx; pop edx; ret;",
-        "pop eax; pop ecx; pop ebx; ret;",
-        "pop eax; pop ecx; pop edx; ret;",
-        "pop eax; pop edx; pop ecx; ret;",
-        "pop eax; pop edx; pop ebx; ret;",
-        "pop ebx; pop ecx; pop edx; ret;",
-        "pop ebx; pop ecx; pop eax; ret;",
-        "pop ebx; pop edx; pop eax; ret;",
-        "pop ebx; pop edx; pop ecx; ret;",
-        "pop ebx; pop eax; pop ecx; ret;",
-        "pop ebx; pop eax; pop edx; ret;",
-        "pop ecx; pop edx; pop eax; ret;",
-        "pop ecx; pop edx; pop ebx; ret;",
-        "pop ecx; pop eax; pop ebx; ret;",
-        "pop ecx; pop eax; pop edx; ret;",
-        "pop ecx; pop ebx; pop edx; ret;",
-        "pop ecx; pop ebx; pop eax; ret;",
-        "pop edx; pop eax; pop ebx; ret;",
-        "pop edx; pop eax; pop ecx; ret;",
-        "pop edx; pop ebx; pop ecx; ret;",
-        "pop edx; pop ebx; pop eax; ret;",
-        "pop edx; pop ecx; pop ebx; ret;",
-        "pop edx; pop ecx; pop eax; ret;"
-    ],
-    "quad": [
-        "pop eax; pop ebx; pop ecx; pop edx; ret;",
-        "pop eax; pop ebx; pop edx; pop ecx; ret;",
-        "pop eax; pop ecx; pop ebx; pop edx; ret;",
-        "pop eax; pop ecx; pop edx; pop ebx; ret;",
-        "pop eax; pop edx; pop ebx; pop ecx; ret;",
-        "pop eax; pop edx; pop ecx; pop ebx; ret;",
-        "pop ebx; pop eax; pop ecx; pop edx; ret;",
-        "pop ebx; pop eax; pop edx; pop ecx; ret;",
-        "pop ebx; pop edx; pop eax; pop ecx; ret;",
-        "pop ebx; pop edx; pop ecx; pop eax; ret;",
-        "pop ebx; pop ecx; pop eax; pop edx; ret;",
-        "pop ebx; pop ecx; pop edx; pop eax; ret;",
-        "pop ecx; pop eax; pop ebx; pop edx; ret;",
-        "pop ecx; pop eax; pop edx; pop ebx; ret;",
-        "pop ecx; pop ebx; pop eax; pop edx; ret;",
-        "pop ecx; pop ebx; pop edx; pop eax; ret;",
-        "pop ecx; pop edx; pop eax; pop ebx; ret;",
-        "pop ecx; pop edx; pop ebx; pop eax; ret;",
-        "pop edx; pop eax; pop ebx; pop ecx; ret;",
-        "pop edx; pop eax; pop ecx; pop ebx; ret;",
-        "pop edx; pop ebx; pop eax; pop ecx; ret;",
-        "pop edx; pop ebx; pop ecx; pop eax; ret;",
-        "pop edx; pop ecx; pop eax; pop ebx; ret;",
-        "pop edx; pop ecx; pop ebx; pop eax; ret;"
-    ]
-}

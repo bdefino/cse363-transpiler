@@ -13,12 +13,11 @@ See [the SDD](SDD.md).
 		- ~~`search`~~
 			- ~~regular expressions~~
 			- ~~return `None` if unfound~~
-- `iio` (Bailey)
-	- `AssemblyIO`
-	- `pload`
-	- `BaseInstructionIO`
-	- `MachineCodeIO`
-	- **test**
+- `iio`
+	- ~~`AssemblyIO`~~
+	- ~~`BaseInstructionIO`~~
+	- ~~`MachineCodeIO`~~
+	- ~~**test**~~
 - `__init__`
 	- `__doc__`
 	- ~~imports~~
@@ -27,13 +26,14 @@ See [the SDD](SDD.md).
 	- ~~`correlate`~~
 	- ~~`parse`~~
 	- ~~**test**~~
-- `__main__` (Junming)
+- `__main__`
 	- `main`
 		- ~~adapt to `mprotect` interface~~
 			- ~~add `buf`/`buflen` options to the CLI~~
 			- ~~`chain` option~~
 				- ~~`mprotect` sub-option~~
-		- argument validation
+		- ~~argument validation~~
+		- adapt to `iio.*.pload*`
 - `transpile`
 	- `Transpiler`
 		- rethink `__init__` interface (move args to `__call__`?)
@@ -45,7 +45,7 @@ See [the SDD](SDD.md).
 		- `chain`
 		- `_inc_reg_n`
 		- `_regassign`
-		- `mprotect` (Bryan)
+		- `mprotect`
 			- per-ISA discrimination (favor x86-32/Linux)
 			- MUST treat subchains as containing mixed values
 				(e.g. bytes and integers (integers should be
