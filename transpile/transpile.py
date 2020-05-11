@@ -272,45 +272,37 @@ class Transpiler:
 
         chain = []
         ############################
-
+        # Mprotect Pop method
         try:
-            # `pop eax`
-            chain += Transpiler._pop_reg("eax", 125, *gadgetss)
+            chain = Transpiler.mprotect_pop_reg_combo(
+                125,
+                kwargs["rop"],
+                kwargs["buflen"],
+                7,
+                *gadgetss)
         except ValueError:
-            # `mov eax, (MPROTECT)`
+            # pop method failed; do other
 
+            # `mov eax, (MPROTECT)`
             chain += list(Transpiler._mov_reg_n("eax", 125, *gadgetss))
 
-        try:
-            # `pop ebx`
-            chain += Transpiler._pop_reg("ebx", kwargs["rop"], *gadgetss)
-        except ValueError:
             # `mov ebx, (ROP)`
 
             chain += list(Transpiler._mov_reg_n("ebx", kwargs["rop"],
                                                 *gadgetss))
-
-        try:
-            # `pop ecx`
-            chain += Transpiler._pop_reg("ecx", kwargs["buflen"], *gadgetss)
-        except ValueError:
             # `mov ecx, (BUFLEN)`
 
             chain += list(Transpiler._mov_reg_n("ecx", kwargs["buflen"],
                                                 *gadgetss))
-
-        try:
-            # `pop edx`
-            chain += Transpiler._pop_reg("edx", 7, *gadgetss)
-        except ValueError:
             # `mov edx, (PROT_EXEC | PROT_READ | PROT_WRITE)`
 
             chain += list(Transpiler._mov_reg_n("edx", 7, *gadgetss))
+        finally:
+            # `int 0x80`
 
-        # `int 0x80`
-
-        chain.append(Transpiler._first_matching_gadget("int 0x80", *gadgetss))
-        return b"".join(chain)
+            chain.append(Transpiler._first_matching_gadget(
+                "int 0x80", *gadgetss))
+            return b"".join(chain)
 
 
 if __name__ == "__main__":
@@ -318,7 +310,7 @@ if __name__ == "__main__":
     # generate an `mprotect` chain for x86-32 Linux
 
     chain = Transpiler.chain("mprotect", buf=0xEEEEEEEE, buflen=0xFFFFFFFF,
-                             rop=-0x1, *[iio.pload(p) for p in sys.argv[1]])
+                             rop=-0x1, *[iio.pload(p) for p in sys.argv[1:]])
 
     with os.fdopen(sys.stdout.fileno(), "wb") as fp:
         fp.write(chain)

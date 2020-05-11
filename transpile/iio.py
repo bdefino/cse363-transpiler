@@ -1,4 +1,5 @@
 import capstone
+import copy
 import io
 import keystone
 import os
@@ -7,7 +8,6 @@ import re
 try:
     from . import analyze, isa
 except ImportError:
-    import os
     import sys
 
     sys.path.append(os.path.realpath(__file__))
@@ -17,108 +17,184 @@ except ImportError:
 
 __doc__ = "instruction de/serialization"
 
-
-def pload(path, sections=None, text=False):
+class BaseInstructionIO:
     """
-    load `BaseInstructionIO` instances corresponding to various sections within
-    an object file
+    instruction de/serialization
 
-    sections are of the form `{name: base}`
+    files are always expected to be in byte mode
 
-    output is of the form
+    instructions are formed in extents of the form:
         ```
         {
-            extent (section or segment): {
-                "base": base,
-                "extent": analyze.CodeSegment,
-                "instructions": capstone.Cs
-            }
+            "base": base,
+            "extent": analyze.CodeSegment/bytes/str,
+            "instructions": iterable of capstone.CsInsn,
+            "isa": ISA
         }
         ```
-    """############################################needs to handle assembly properly
-    baseiio = AssemblyIO if text else MachineCodeIO
-
-    with open(path, "rb") as fp:
-        binary = analyze.Binary(fp.read())
-    _isa = isa.correlate({
-        "capstone": {
-            "arch": binary.arch,
-            "endianness": binary.endianess,
-            "mode": binary.mode
-        }
-    })
-    sections = dict(sections) if isinstance(sections, dict) \
-        else {".text": None}
-    sections = {k: {"base": v} for k, v in sections.items()}
-
-    for extent in binary.executable_sections:
-        base = sections[extent.name] \
-            if isinstance(sections.get(extent.name, None), int) \
-            else extent.addr
-        sections[extent.name] = {
-            "base": base,
-            "extent": extent,
-            "instructions": baseiio.load(io.BytesIO(extent.binary_arr), _isa,
-                base),
-            "isa": _isa
-        }
-    return list(filter(lambda n: isinstance(sections[n], dict), sections))
-
-
-class BaseInstructionIO:
-    """instruction de/serialization"""
+    and multiple extents are grouped like so:
+        `{name: extent}`
+    """
 
     @staticmethod
-    def dump(instructions, isa, fp):
-        """dump instructions to a file"""
+    def dump(fp, extent):
+        """load a single executable extent to a file"""
         raise NotImplementedError()
 
     @staticmethod
-    def load(fp, isa):
-        """load instructions from a file"""
+    def load(fp, _isa, offset = 0):
+        """load a single executable extent from a file"""
         raise NotImplementedError()
 
+    @staticmethod
+    def pdump(path, extent):
+        """dump a single executable extent to a path"""
+        raise NotImplementedError()
+
+    @staticmethod
+    def pload(path, _isa, offset = 0):
+        """load a single executable extent at a path"""
+        raise NotImplementedError()
+
+    @staticmethod
+    def ploadall(path, extents = None):
+        """load all executable extents at a path"""
+        raise NotImplementedError()
 
 class AssemblyIO(BaseInstructionIO):
-    """assembly serialization"""
+    """assembly deserialization"""
 
     @staticmethod
-    def dump(instructions, isa, fp):
-        """dump assembly to a file"""
-        return keystone.Ks(isa["keystone"]["arch"],
-            isa["keystone"]["endianness"] + isa["keystone"]["endianness"]).asm(
-                instructions)
+    def dump(fp, extent):
+        """load a single executable extent to a file"""
+        fp.write(b'\n'.join((bytes(i.mnemonic) for i in extent["instructions"])))
 
     @staticmethod
-    def load(fp, isa, offset = 0):
-        """load assembly from a file based on an ISA"""
+    def load(fp, _isa, offset = 0):
+        """load a single executable extent from a file"""
+        _isa = isa.correlate(copy.deepcopy(_isa))
+
         # first, assemble
 
         s = io.StringIO()
-        AssemblyIO.dump(fp.read(), s)
+        _extent = fp.read()
+        MachineCodeIO.dump(s, {"instructions": _extent, "isa": _isa})
         s.seek(0, os.SEEK_SET)
-        return MachineCodeIO.load(s, isa, offset)
 
+        # disassemble
 
-class MachineCodeIO(BaseInstructionIO):
-    """machine code serialization"""
-
-    @staticmethod
-    def dump(instructions, isa, fp):
-        """dump machine code to a file"""
-        return AssemblyIO.dump(b';'.join((i.bytes for i in instructions)), isa,
-                               fp)
+        extent = MachineCodeIO.load(s, _isa, offset)
+        extent["extent"] = _extent
+        return extent
 
     @staticmethod
-    def load(fp, isa, offset = 0):
-        """load machine code from a file based on an ISA"""
-        return capstone.Cs(isa["capstone"]["arch"],
-            isa["capstone"]["endianness"] + isa["capstone"]["mode"]).disasm(
-                fp.read(), offset)
+    def pdump(path, extent):
+        """dump a single executable extent to a path"""
+        with open(path, "wb") as fp:
+            AssemblyIO.dump(fp, extent)
+
+    @staticmethod
+    def pload(path, _isa, offset = 0):
+        """load a single executable extent at a path"""
+        _isa = isa.correlate(copy.deepcopy(_isa))
+
+        with open(path, "rb") as fp:
+            return AssemblyIO.load(fp, _isa, offset)
+
+class MachineCodeIO(AssemblyIO):
+    """machine code deserialization"""
+
+    @staticmethod
+    def dump(fp, extent):
+        """load a single executable extent to a file"""
+        _isa = isa.correlate(copy.deepcopy(extent["isa"]))
+        return keystone.Ks(_isa["keystone"]["arch"],
+            _isa["keystone"]["endianness"] + _isa["keystone"]["mode"]).asm(
+                extent["instructions"])
+
+    @staticmethod
+    def load(fp, _isa, offset = 0):
+        """load a single executable extent from a file"""
+        _isa = isa.correlate(copy.deepcopy(_isa))
+
+        # need extent
+
+        start = fp.tell()
+        extent = fp.read()
+        fp.seek(start)
+
+        # load
+
+        return {
+                "base": offset,
+                "extent": extent,
+                "instructions": capstone.Cs(_isa["capstone"]["arch"],
+                    _isa["capstone"]["endianness"]
+                        + _isa["capstone"]["mode"]).disasm(fp.read(), offset),
+                "isa": _isa
+            }
+
+    @staticmethod
+    def pdump(path, extent):
+        """load a single executable extent to a path"""
+        _isa = isa.correlate(copy.deepcopy(extent["isa"]))
+
+        with open(path, "wb") as fp:
+            return MachineCodeIO.dump(fp, extent)
+
+    @staticmethod
+    def pload(path, _isa, offset = 0):
+        """load a single executable extent at a path"""
+        _isa = isa.correlate(copy.deepcopy(_isa))
+
+        with open(path, "rb") as fp:
+            return MachineCodeIO.load(fp)
+
+    @staticmethod
+    def ploadall(path, extents = None):
+        """load all executable extents at a path"""
+
+        # load the binary
+
+        with open(path, "rb") as fp:
+            binary = analyze.Binary(fp.read())
+
+        # compute the complete _isa
+
+        _isa = isa.correlate({
+            "capstone": {
+                "arch": binary.arch,
+                "endianness": binary.endianess,
+                "mode": binary.mode
+            }})
+
+        # load extents
+
+        extents = dict(extents) if isinstance(extents, dict) \
+            else {".text": None}
+        extents = {k: {"base": v} for k, v in extents.items()}
+
+        for extent in binary.executable_sections:
+            base = extents[extent.name] \
+                if isinstance(extents.get(extent.name, None), int) \
+                else extent.addr
+            extents[extent.name] = MachineCodeIO.load(
+                o.BytesIO(extent.binary_arr), _isa, base}
+
+        # filter out unmatched extents
+
+        return {k: v for k, v in extents.items() if len(v.keys()) > 1}
 
 if __name__ == "__main__":
     # test loading from a binary
 
-    from_binary = pload("/usr/lib/i386-linux-gnu/libc.so")
-    from_assembly = pload("../mprotect.S", text = True)
+    compiled = MachineCodeIO.ploadall("../linux_32")
+    print(compiled)
+    source = AssemblyIO.pload("../x86-32-little.S", isa.parse("x86-32-little"))
+    print(source)
+    print([source["extent"]])
+
+    with os.fdopen(sys.stdin.fileno(), "wb") as fp:
+        AssemblyIO.dump(fp, source)
+        MachineCodeIO.dump(fp, source)
 
