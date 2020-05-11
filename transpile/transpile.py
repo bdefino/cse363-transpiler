@@ -265,11 +265,15 @@ class Transpiler:
         """
         if Transpiler._isa_mismatch(*objs):
             raise TypeError("ISA mismatch")
+
         # per-ISA discrimination
-        for k, v in ("buf", "buflen", "rop"):
-            if not "buf" in kwargs:
+
+        ################################################################################
+
+        for k in ("buf", "buflen", "rop"):
+            if not k in kwargs:
                 raise KeyError("expected \"%s\" in `kwargs`" % k)
-            elif not isinstance(v, int):
+            elif not isinstance(kwargs[k], int):
                 raise KeyError(
                     "expected `kwargs[\"%s\"]` to be a positive integer" % k)
 
