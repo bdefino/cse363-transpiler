@@ -37,9 +37,12 @@ class Transpiler:
 
         # populate gadgets
 
+        gadgetss = set()
+
         for o in objs:
-            objs[o]["gadgets"] = gadget.Gadgets(o["instructions"])
-        gadgetss = [o["gadgets"] for o in objs]
+            for e in o:
+                e["gadgets"] = gadget.Gadgets(o["instructions"])
+                gadgetss.add(e["gadgets"])
 
         # search for corresponding gadgets
 
@@ -279,9 +282,12 @@ class Transpiler:
 
         # load all gadgets
 
+        gadgetss = set()
+
         for o in objs:
-            o["gadgets"] = gadget.Gadgets(o["instructions"])
-        gadgetss = [o["gadgets"] for o in objs]
+                for e in o:
+                    e["gadgets"] = gadget.Gadgets(e["instructions"])
+                    gadgetss.add(e["gadgets"])
 
         # create chain
 
