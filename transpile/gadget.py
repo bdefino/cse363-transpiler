@@ -53,22 +53,32 @@ class Gadgets:
         for i, j in self.gadgets.items():
             print("ret addr: 0x%x\t" %i, "gadgets:", j)
 
-    def search(self, pattern):
+    def search(self, pattern, verbose=0):
+        """ verbose level:
+            0 = no output
+            1 = output if gadget is found or not
+            2 = output every gadget string
+        """
         pattern = " ; ".join(i.strip() for i in pattern.split(';'))
         glist = {}
-        print("target pattern:", pattern)
+        if verbose:
+            print("target pattern:", pattern)
         
         for k in self.gadgets.keys():
             addr = self.gadgets[k][0]
             g = self.__tostring(k)
             if re.search(pattern, g):
-                print(g)
+                if verbose >= 2:
+                    print(g)
                 glist[addr] = g
         
         if glist != {}:
+            if verbose >= 1:
+                print("gadget found")
             return glist
         else:
-            print("gadget not found")
+            if verbose >= 1:
+                print("gadget not found")
             return None
 
 
