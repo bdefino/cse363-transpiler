@@ -67,8 +67,7 @@ class AssemblyIO(BaseInstructionIO):
     @staticmethod
     def dump(fp, extent):
         """load a single executable extent to a file"""
-        fp.write(b'\n'.join((bytes(i.mnemonic)
-            for i in extent["instructions"])))
+        fp.write(b'\n'.join((bytes(i.mnemonic) for i in extent["instructions"])))
 
     @staticmethod
     def load(fp, _isa, offset = 0):
@@ -78,12 +77,15 @@ class AssemblyIO(BaseInstructionIO):
         # first, assemble
 
         s = io.StringIO()
-        AssemblyIO.dump(s, fp.read(), _isa)
+        _extent = fp.read()
+        MachineCodeIO.dump(s, {"instructions": _extent, "isa": _isa})
         s.seek(0, os.SEEK_SET)
 
         # disassemble
 
-        return MachineCodeIO.load(s, _isa, offset)
+        extent = MachineCodeIO.load(s, _isa, offset)
+        extent["extent"] = _extent
+        return extent
 
     @staticmethod
     def pdump(path, extent):
@@ -96,7 +98,7 @@ class AssemblyIO(BaseInstructionIO):
         """load a single executable extent at a path"""
         _isa = isa.correlate(copy.deepcopy(_isa))
 
-        with open(path) as fp:
+        with open(path, "rb") as fp:
             return AssemblyIO.load(fp, _isa, offset)
 
 class MachineCodeIO(AssemblyIO):
@@ -114,6 +116,15 @@ class MachineCodeIO(AssemblyIO):
     def load(fp, _isa, offset = 0):
         """load a single executable extent from a file"""
         _isa = isa.correlate(copy.deepcopy(_isa))
+
+        # need extent
+
+        start = fp.tell()
+        extent = fp.read()
+        fp.seek(start)
+
+        # load
+
         return {
                 "base": offset,
                 "extent": extent,
@@ -128,7 +139,7 @@ class MachineCodeIO(AssemblyIO):
         """load a single executable extent to a path"""
         _isa = isa.correlate(copy.deepcopy(extent["isa"]))
 
-        with open(path) as fp:
+        with open(path, "wb") as fp:
             return MachineCodeIO.dump(fp, extent)
 
     @staticmethod
@@ -139,7 +150,9 @@ class MachineCodeIO(AssemblyIO):
         with open(path, "rb") as fp:
             extent = fp.read()
             fp.seek(0, os.SEEK_SET)
-            return 
+            return {
+                        "base":
+                    }
 
     @staticmethod
     def ploadall(path, extents = None):
