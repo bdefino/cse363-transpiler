@@ -34,7 +34,7 @@ def correlate(isa):
             and "keystone" in isa:
         return isa
     elif "capstone" in isa:
-        isa["keystone"] = [None, None]
+        isa["keystone"] = {}
 
         if isa["capstone"]["arch"] == capstone.CS_ARCH_MIPS:
             isa["keystone"] = keystone.KS_ARCH_MIPS
@@ -57,7 +57,7 @@ def correlate(isa):
         else:
             raise ValueError("unsupported mode")
     else:
-        isa["capstone"] = [None, None]
+        isa["capstone"] = {}
 
         if isa["keystone"]["arch"] == keystone.KS_ARCH_MIPS:
             isa["capstone"] = capstone.CS_ARCH_MIPS
@@ -130,6 +130,7 @@ def parse(s):
     elif arch == "x86":
         output["capstone"]["arch"] = capstone.CS_ARCH_X86
     else:
+        print([components])
         raise ValueError("unsupported architecture")
 
     # classify mode
@@ -140,13 +141,12 @@ def parse(s):
         output["capstone"]["mode"] = capstone.CS_MODE_64
     else:
         raise ValueError("unsupported mode")
-    output["capstone"] = tuple(output["capstone"])
     return correlate(output)
 
 if __name__ == "__main__":
     # test
 
-    isa = parse("x84-64-Little")
+    isa = parse("x86-64-Little")
     print(isa)
     del isa["keystone"]
     print(correlate(isa))
