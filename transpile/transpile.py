@@ -179,9 +179,9 @@ class Transpiler:
             gadgets = g.search(pattern)
 
             if gadgets:
-                print(gadgets)
-                return list(gadgets.keys())[0]
-        # print(pattern)
+                addr, gadget = list(gadgets.items())[0]
+                print("%x\t%s" % (addr, gadget))
+                return addr
         return None
 
     @staticmethod
@@ -451,11 +451,9 @@ class Transpiler:
 
             # chain += list(Transpiler._inc_reg_n("edx", 7, *gadgetss))
         # `int 0x80`
+
         chain.append(Transpiler._first_matching_gadget(
             "int 0x80", *gadgetss))
-        print("---")
-        print(chain)
-        print("---")
         return chain
 
 

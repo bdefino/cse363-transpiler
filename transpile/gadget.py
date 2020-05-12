@@ -88,7 +88,7 @@ class Gadgets:
         else:
             if verbose >= 3:
                 print("gadget not found")
-            return None
+            return {}
 
     def parse_glist(self, gin, p):
         gout = {}
