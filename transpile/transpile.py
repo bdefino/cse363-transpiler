@@ -247,7 +247,7 @@ class Transpiler:
             # (via `pop TEMP;move REG, TEMP`)
 
             pops = {r: g.search("pop %s;ret" % r) for r in matched.keys()}
-            pops = {k: v for k: v in pops.items() if v is not None}
+            pops = {k: v for k, v in pops.items() if v is not None}
 
             for r in set(unmatched): # copy
                 moves = {d: Transpiler._first_matching_gadget(
