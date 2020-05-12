@@ -165,13 +165,16 @@ class Transpiler:
 
         # fill the register
 
-        g = Transpiler._first_matching_gadget(
-            ("dec %s;ret" if n < 0 else "inc %s;ret") % reg, *gadgetss)
+        g = None
+
+        if n < 0:
+            g = Transpiler._first_matching_gadget(
+                "((add %s, -1)|(dec %s)|(sub %s, 1));ret" % (reg, reg, reg))
+        else:
+            g = Transpiler._first_matching_gadget(
+                "((add %s, 1)|(inc %s)|(sub %s, -1));ret" % (reg, reg, reg))
 
         if g is None:
-            print((reg, n, g))
-            print('THIS A BUG: failed?')
-            ###############
             return
         increment = -1 if n < 0 else 1
 
@@ -239,7 +242,7 @@ class Transpiler:
                 nregs -= 1
             nregs = min((len(unmatched), nregs))
 
-        if matched:
+        if False:#############matched:
             # attempt to match unmatched registers indirectly
             # (via `pop TEMP;move REG, TEMP`)
 
@@ -249,11 +252,11 @@ class Transpiler:
             for r in set(unmatched): # copy
                 moves = {d: Transpiler._first_matching_gadget(
                     "move %s, %s" % (d, r), *gadgetss) for d in pops.keys()]
-                moves = {k: v for k, v in pops.items() if v is not None}
+                moves = {k: v for k, v in moves.items() if v is not None}
 
                 if not moves:
                     continue
-                ############################################################chain.append(pops[]
+                r, move = list(moves.items())[0]#######################################################
 
         # populate matched registers
 

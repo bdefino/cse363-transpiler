@@ -17,6 +17,7 @@ See [the SDD](SDD.md).
 	- ~~`AssemblyIO`~~
 	- ~~`BaseInstructionIO`~~
 	- ~~`MachineCodeIO`~~
+		- `loadall`
 	- ~~**test**~~
 - `__init__`
 	- `__doc__`
