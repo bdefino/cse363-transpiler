@@ -13,11 +13,11 @@ See [the SDD](SDD.md).
 		- ~~`search`~~
 			- ~~regular expressions~~
 			- ~~return `None` if unfound~~
-- `iio`
+- ~~`iio`~~
 	- ~~`AssemblyIO`~~
 	- ~~`BaseInstructionIO`~~
 	- ~~`MachineCodeIO`~~
-		- `loadall`
+		- ~~`loadall`~~
 	- ~~**test**~~
 - `__init__`
 	- `__doc__`
@@ -44,8 +44,8 @@ See [the SDD](SDD.md).
 			- construct frames
 			- function arguments (maybe the input/output format
 				should be specialized?)
-		- `chain`
-		- `_inc_reg_n`
+		- ~~`chain`~~
+		- ~~`_inc_reg_n`~~
 		- `_reg_assign`
 			- `pop TEMP; mov REG` -> second-most preferable
 		- `mprotect`
@@ -55,7 +55,6 @@ See [the SDD](SDD.md).
 				interpreted as register contents))
 	- **test**
 - regexes (e.g. `re.findall("pop e.x; (?!pop e.x; )ret", "pop eax; pop ebx; pop ecx; ret")`)?
-- BASE ADDRESS INTEGRATION????
 - ARGUMENT VALIDATION
 - demo
 

@@ -275,6 +275,14 @@ class Transpiler:
                 nregs -= 1
             nregs = min((len(unmatched), nregs))
 
+        if matched:
+            # attempt to indirectly assign via `pop MATCHED; move REG`
+
+            for u in set(unmatched):
+                # generate a pool of possible temporary registers
+
+                pool = set()
+
         # populate matched registers
 
         for rs, pop in matched.items():
