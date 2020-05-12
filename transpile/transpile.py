@@ -153,7 +153,13 @@ class Transpiler:
         _isa = isa.correlate(copy.deepcopy(_isa))
 
         if which in chains:
+            print("Generating the \"%s\" chain..." % which)
             chain = chains[which](*objs, **kwargs)
+
+            if chain is None:
+                print("Failed!")
+                return
+            print("Packing the chain...")
             packer = '>' if _isa["capstone"]["endianness"] \
                 == capstone.CS_MODE_BIG_ENDIAN else '<'
             packer += 'I' if _isa["capstone"]["mode"] == capstone.CS_MODE_32 \
@@ -176,7 +182,7 @@ class Transpiler:
         instances
         """
         for g in gadgetss:
-            gadgets = g.search(pattern)
+            gadgets = g.search(pattern, 3)
 
             if gadgets:
                 addr, gadget = list(gadgets.items())[0]
@@ -202,6 +208,7 @@ class Transpiler:
 
         if g is None:
             return
+        print("\t(* %u)" % abs(n))
         increment = -1 if n < 0 else 1
 
         while n:
@@ -400,12 +407,14 @@ class Transpiler:
         gadgetss = set()
 
         for o in objs:
-            for e in o.values():
+            for n, e in o.items():
+                print("Loading gadgets from objects (extent \"%s\")..." % n)
                 e["gadgets"] = gadget.Gadgets(e["instructions"])
                 gadgetss.add(e["gadgets"])
 
         # create chain
 
+        print("Generating gadget chain...")
         chain = []
         ############################
         # Mprotect Pop method
@@ -421,15 +430,15 @@ class Transpiler:
 
             for m in missing:
                 if m == "eax":
-                    chain += [Transpiler._inc_reg_n(m, 125, *gadgetss)]
+                    chain += Transpiler._inc_reg_n(m, 125, *gadgetss)
                 if m == "ebx":
-                    chain += [Transpiler._inc_reg_n(m,
-                                                    kwargs["buf"], *gadgetss)]
+                    chain += Transpiler._inc_reg_n(m,
+                                                    kwargs["buf"], *gadgetss)
                 if m == "ecx":
-                    chain += [Transpiler._inc_reg_n(m,
-                                                    kwargs["buflen"], *gadgetss)]
+                    chain += Transpiler._inc_reg_n(m,
+                                                    kwargs["buflen"], *gadgetss)
                 if m == "edx":
-                    chain += [Transpiler._inc_reg_n(m, 7, *gadgetss)]
+                    chain += Transpiler._inc_reg_n(m, 7, *gadgetss)
             # detect if full chain. If not,
             # use fallback methods to fill in the odd ones out"""
         except ValueError as e:
@@ -453,7 +462,11 @@ class Transpiler:
         # `int 0x80`
 
         chain.append(Transpiler._first_matching_gadget(
-            "int 0x80", *gadgetss))
+            "int 0x80;", *gadgetss))
+
+        if chain[-1] is None:
+            return
+        print(chain)
         return chain
 
 

@@ -189,7 +189,11 @@ class MachineCodeIO(AssemblyIO):
             base = extents[extent.name] \
                 if isinstance(extents.get(extent.name, None), int) \
                 else extent.addr
-            extents[extent.name] = MachineCodeIO.load(io.BytesIO(extent.code), _isa, base)
+            code = io.BytesIO(extent.code)
+
+            for i in range(8): # intel-specific##############################################################
+                code.seek(i, os.SEEK_SET)
+                extents[extent.name + (" (shift == %u)" % i)] = MachineCodeIO.load(code, _isa, base + i)
 
         # filter out unmatched extents
 
