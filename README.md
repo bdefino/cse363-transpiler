@@ -54,7 +54,7 @@ See [the SDD](SDD.md).
 				(e.g. bytes and integers (integers should be
 				interpreted as register contents))
 	- **test**
-- regexes (e.g. `re.findall("pop e.x; (?!pop e.x; )ret", "pop eax; pop ebx; pop ecx; ret")`)?
+- agnosticize implementation (from x86-32-Little to any x86/MIPS combo)
 - ARGUMENT VALIDATION
 - demo
 

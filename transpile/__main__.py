@@ -80,6 +80,10 @@ def main(argv):
 
     opts, args = getopt.getopt(argv[1:], "ab:chi:l:o:p:rt+")
 
+    if not args:
+        help(argv[0])
+        return 1
+
     try:
         target, sources = args[0], {k:v for k, v in (parse_source(a)
             for a in args[1:])}
