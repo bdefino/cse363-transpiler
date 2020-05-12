@@ -132,7 +132,7 @@ class MachineCodeIO(AssemblyIO):
 
         start = fp.tell()
         extent = fp.read()
-        fp.seek(start)
+        fp.seek(start, os.SEEK_SET)
 
         # load
 
@@ -189,8 +189,7 @@ class MachineCodeIO(AssemblyIO):
             base = extents[extent.name] \
                 if isinstance(extents.get(extent.name, None), int) \
                 else extent.addr
-            extents[extent.name] = MachineCodeIO.load(
-                io.BytesIO(extent.binary_arr), _isa, base)
+            extents[extent.name] = MachineCodeIO.load(io.BytesIO(extent.code), _isa, base)
 
         # filter out unmatched extents
 
@@ -200,14 +199,21 @@ class MachineCodeIO(AssemblyIO):
 if __name__ == "__main__":
     # test loading from a binary
 
-    compiled = MachineCodeIO.ploadall("../linux_32")
+    compiled = MachineCodeIO.ploadall("../libc.so.6")
+
+    for name, extent in compiled.items():
+        print(name)
+
+        for i in extent["instructions"]:
+            print("\t0x%x\t%s\t%s" % (i.address, i.mnemonic, i.op_str))
+    sys.exit()
     print(compiled)
     source = AssemblyIO.pload("../x86-32-little.S", isa.parse("x86-32-little"))
     print(source)
 
     # test dumping to assembly/machine code (not a full binary)
 
-    with os.fdopen(sys.stdin.fileno(), "wb") as fp:
+    with os.fdopen(sys.stdout.fileno(), "wb") as fp:
         AssemblyIO.dump(fp, source)
         MachineCodeIO.dump(fp, source)
 
