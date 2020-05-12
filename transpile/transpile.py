@@ -435,50 +435,15 @@ class Transpiler:
         # create chain
 
         print("Generating gadget chain...")
-        chain = []
-        ############################
-        # Mprotect Pop method
-        try:
-            chain = Transpiler._reg_assign(eax=125, ebx=kwargs["buf"],
-                                            ecx=kwargs["buflen"], edx=7, *gadgetss)
-            """chain, missing = Transpiler.mprotect_pop_reg_combo(
-                125,
-                kwargs["buf"],
-                kwargs["buflen"],
-                7,
-                *gadgetss)
+        chain = Transpiler._reg_assign(eax = 125, ebx = kwargs["buf"],
+            ecx = kwargs["buflen"], edx = 7, *gadgetss)
+        """chain, missing = Transpiler.mprotect_pop_reg_combo(
+            125,
+            kwargs["buf"],
+            kwargs["buflen"],
+            7,
+            *gadgetss)"""
 
-            for m in missing:
-                if m == "eax":
-                    chain += Transpiler._inc_reg_n(m, 125, *gadgetss)
-                if m == "ebx":
-                    chain += Transpiler._inc_reg_n(m,
-                                                    kwargs["buf"], *gadgetss)
-                if m == "ecx":
-                    chain += Transpiler._inc_reg_n(m,
-                                                    kwargs["buflen"], *gadgetss)
-                if m == "edx":
-                    chain += Transpiler._inc_reg_n(m, 7, *gadgetss)
-            # detect if full chain. If not,
-            # use fallback methods to fill in the odd ones out"""
-        except ValueError as e:
-            traceback.print_exception(
-                type(e), e, e.__traceback__, file=sys.stderr)
-
-            # `mov eax, (MPROTECT)`
-            # chain += list(Transpiler._inc_reg_n("eax", 125, *gadgetss))
-
-            # # `mov ebx, (ROP)`
-
-            # chain += list(Transpiler._inc_reg_n("ebx", kwargs["rop"],
-            #                                     *gadgetss))
-            # # `mov ecx, (BUFLEN)`
-
-            # chain += list(Transpiler._inc_reg_n("ecx", kwargs["buflen"],
-            #                                     *gadgetss))
-            # # `mov edx, (PROT_EXEC | PROT_READ | PROT_WRITE)`
-
-            # chain += list(Transpiler._inc_reg_n("edx", 7, *gadgetss))
         # `int 0x80`
 
         if chain is None:
