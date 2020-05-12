@@ -215,7 +215,7 @@ class Transpiler:
         # attempt to match (sub)permutations of direct `pop REG`s
 
         chain = []
-        matched = {} # `{gadget address: ordered regs}`
+        matched = {} # `{ordered registers: gadget address}`
         nregs = len(regs)
         unmatched = set(regs.keys())
 
@@ -224,14 +224,14 @@ class Transpiler:
 
             for perm in itertools.permutations(unmatched, nregs):
                 pattern = ';'.join(["pop " + r for r in perm] + ["ret"])
-                g = Transpiler._first_matching_gadget(pattern, *gadgetss)
+                pop = Transpiler._first_matching_gadget(pattern, *gadgetss)
 
-                if g is None:
+                if pop is None:
                     continue
 
                 for r in perm:
                     unmatched.remove(r)
-                matched[tuple(perm)] = g
+                matched[tuple(perm)] = pop
                 matched_any = True
                 break
 
@@ -243,18 +243,24 @@ class Transpiler:
             # attempt to match unmatched registers indirectly
             # (via `pop TEMP;move REG, TEMP`)
 
-            mgs = [g.search("pop %s;ret" % r) for r in matched.keys()]
+            pops = {r: g.search("pop %s;ret" % r) for r in matched.keys()}
+            pops = {k: v for k: v in pops.items() if v is not None}
 
-            for reg in set(unmatched): # copy
-                for mg in mgs:
-                    pass#######
+            for r in set(unmatched): # copy
+                moves = {d: Transpiler._first_matching_gadget(
+                    "move %s, %s" % (d, r), *gadgetss) for d in pops.keys()]
+                moves = {k: v for k, v in pops.items() if v is not None}
+
+                if not moves:
+                    continue
+                ############################################################chain.append(pops[]
 
         # populate matched registers
 
-        for rs, g in matched.items():
+        for rs, pop in matched.items():
             # add gadget
 
-            chain.append(g)
+            chain.append(pop)
 
             # add values
 
