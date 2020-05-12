@@ -275,43 +275,41 @@ class Transpiler:
                 nregs -= 1
             nregs = min((len(unmatched), nregs))
 
-        if direct \
-                and unmatched:
-            # attempt to indirectly assign via `pop MATCHED; mov REG`
+        # attempt to indirectly assign via a combination
+        # of `pop MATCHED` and `mov REG`
 
-            pool = set(regs.keys())
+        pool = set(regs.keys()) # temp
 
-            for u in set(unmatched):
-                for d in set(pool): # copy
-                    # attempt to fully match `pop MATCHED; mov REG`
+        for u in set(unmatched):
+            for p in set(pool): # copy
+                # attempt to fully match `pop MATCHED; mov REG`
 
-                    if d == u:
-                        continue
+                if p == u:
+                    continue
 
-                    pop_move = Transpiler._first_matching_gadget(
-                        "pop %s;mov %s, %s;ret" % (d, u, d), *gadgetss)
+                pop_move = Transpiler._first_matching_gadget(
+                    "pop %s;mov %s, %s;ret" % (p, u, p), *gadgetss)
 
-                    if pop_move:
-                        chain += [pop_move, regs[u]]
-                        pool.remove(d)
-                        unmatched.remove(u)
-                        break
-
-                    # attempt to match a composite load (via multiple gadgets)
-
-                    pop = Transpiler._first_matching_gadget("pop %s;ret" % d,
-                        *gadgetss)
-
-                    if pop is None:
-                        break
-                    move = Transpiler._first_matching_gadget(
-                        "mov %s, %s;ret" % (u, d), *gadgetss)
-
-                    if move is None:
-                        break
-                    chain += [pop, regs[u], move]
-                    pool.remove(d)
+                if pop_move:
+                    chain += [pop_move, regs[u]]
+                    pool.remove(p)
                     unmatched.remove(u)
+                    break
+
+                # attempt to match a composite load (via multiple gadgets)
+
+                pop = Transpiler._first_matching_gadget("pop %s;ret" % p, *gadgetss)
+
+                if pop is None:
+                    break
+                move = Transpiler._first_matching_gadget(
+                    "mov %s, %s;ret" % (u, p), *gadgetss)
+
+                if move is None:
+                    break
+                chain += [pop, regs[u], move]
+                pool.remove(p)
+                unmatched.remove(u)
 
         # populate directly-loadable registers
 
@@ -483,6 +481,8 @@ class Transpiler:
             # chain += list(Transpiler._inc_reg_n("edx", 7, *gadgetss))
         # `int 0x80`
 
+        if chain is None:
+            return chain
         chain.append(Transpiler._first_matching_gadget(
             "int 0x80", *gadgetss))
 
@@ -502,3 +502,4 @@ if __name__ == "__main__":
 
     with open("mprotect-chain", "wb") as fp:
         fp.write(chain)
+
