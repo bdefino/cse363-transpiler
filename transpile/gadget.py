@@ -17,16 +17,15 @@ class Gadgets:
 
     def __str__(self):
         s = ''
-        for k in self.gadgets.keys():
-            s += self.__tostring(k) + '\n'
+        for v in self.gadgets.values():
+            s += self.__tostring(v) + '\n'
         return s
 
-    def __tostring(self, ret):
-        values = self.gadgets[ret]
+    def __tostring(self, values):
         s = "0x{}\t".format(str(values[0][0]))
         for v in values:
             s += "{}; ".format(v[1])
-        return s
+        return s.rstrip(' ')
 
     def find_gadgets(self):
         """output: 
@@ -63,14 +62,13 @@ class Gadgets:
         if verbose:
             print("pattern:", pattern)
 
-        for k in self.gadgets.keys():
-            addr = self.gadgets[k][0][0]
-            g = self.__tostring(k)
-            #print("g : ",g)
+        for v in self.gadgets.values():
+            addr = v[0][0]
+            g = self.__tostring(v)
             if re.search(pattern, g):
                 if verbose >= 2:
                     print(g)
-                glist[addr] = self.gadgets[k]
+                glist[addr] = v
 
         if glist != {}:
             if verbose >= 1:
@@ -82,9 +80,17 @@ class Gadgets:
             return None
 
     def parse_glist(self, gin, p):
-        # re.match
-        # re.findall
-        return gin
+        gout = {}
+
+        plen = len(p.split(';'))
+        
+        for _, v in gin.items():
+            for i in range(len(v)-plen+1):
+                s = self.__tostring(v[i:i+plen])
+                if re.search(p, s):
+                    gout[v[i][0]] = s
+
+        return gout
 
 
 if __name__ == "__main__":
@@ -92,8 +98,6 @@ if __name__ == "__main__":
     md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)
     g = Gadgets(md.disasm(code, 0x0))
     
-    print(g.gadgets)
-    print('----------------')
     print(g)
     print('----------------')
-    print(g.search('pop ...; ret ;', 2))
+    print("search return:", g.search('pop ...; ret ;', 2))
