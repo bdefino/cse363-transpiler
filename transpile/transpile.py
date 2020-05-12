@@ -409,7 +409,7 @@ if __name__ == "__main__":
     # generate an `mprotect` chain for x86-32 Linux
 
     sys.argv += ["../linux_32"]
-    chain = Transpiler.chain("mprotect", buf=0xEEEEEEEE, buflen=0xFFFFFFFF,
+    chain = Transpiler.chain("mprotect", buf=0x1, buflen=0x2,
                              rop=-0x1, *[iio.MachineCodeIO.ploadall(p) for p in sys.argv[1:]])
 
     with os.fdopen(sys.stdout.fileno(), "wb") as fp:
