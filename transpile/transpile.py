@@ -162,12 +162,12 @@ class Transpiler:
 
         # fill the register
 
-        gadget = Transpiler._first_matching_gadget(
+        g = Transpiler._first_matching_gadget(
             ("dec %s" if n < 0 else "inc %s") % reg, *gadgetss)
         increment = -1 if n < 0 else 1
 
         while n:
-            chain.append(gadget)
+            chain.append(g)
             n -= increment
         return chain
 
@@ -208,7 +208,7 @@ class Transpiler:
         chain = []
         matched = {}
         nregs = len(regs)
-        unmatched = regs.clone()
+        unmatched = regs.copy()
 
         while nregs > 0:
             for perm in itertools.permutations(unmatched.keys(), nregs):
@@ -217,18 +217,18 @@ class Transpiler:
 
                 if not gadgets:
                     continue
-                gadget = list(gadgets.keys())[0]
+                g = gadgets.keys()[0]
 
                 for reg in perm:
-                    matched[reg] = gadget
+                    matched[reg] = g
                     del unmatched[reg]
                 nregs -= len(perm)
             nregs -= 1
 
         # populate matched registers
 
-        for reg, gadget in matched.items():
-            chain.append(gadget[1])
+        for reg, g in matched.items():
+            chain.append(g[1])
             chain.append(regs[reg])
 
         # populate unmatched registers incrementally
@@ -373,12 +373,14 @@ class Transpiler:
         ############################
         # Mprotect Pop method
         try:
-            chain = Transpiler.mprotect_pop_reg_combo(
-                125,
-                kwargs["rop"],
-                kwargs["buflen"],
-                7,
-                *gadgetss)
+            chain = Transpiler._reg_assign(eax = 125, ebx = kwargs["buf"],
+                    ecx = kwargs["buflen"], edx = 7, *gadgetss)
+            #chain = Transpiler.mprotect_pop_reg_combo(
+            #    125,
+            #    kwargs["rop"],
+            #    kwargs["buflen"],
+            #    7,
+            #    *gadgetss)
         except ValueError:
             print("fallback")
             # pop method failed; do other
