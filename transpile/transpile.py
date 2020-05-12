@@ -3,6 +3,7 @@ import io
 import itertools
 import re
 import struct
+import traceback
 
 try:
     from . import gadget, iio
@@ -151,7 +152,7 @@ class Transpiler:
             if gadgets:
                 print(gadgets)
                 return list(gadgets.keys())[0]
-        #print(pattern)
+        # print(pattern)
         return None
 
     @staticmethod
@@ -169,6 +170,8 @@ class Transpiler:
 
         if g is None:
             print((reg, n, g))
+            print('THIS A BUG: failed?')
+            ###############
             return
         increment = -1 if n < 0 else 1
 
@@ -254,78 +257,49 @@ class Transpiler:
         in any combination
         """
         chain = []
+        missing = []
         reg_d = {"eax": None,
                  "ebx": None,
                  "ecx": None,
                  "edx": None}
 
         # load the pool
-
+        # gadgetss = all of the gadget form all binarys (Multiple gagdet objs)
+        # g.search = searchs for gadgets in gadget objs
         # check for single pop
-        for c in POP_REG_COMBO_POOL["single"]:
-            for g in gadgetss:
-                gadget = g.search(c, 2)
-                if gadget:
-                    re_output = re.findall("e[a-d]x", list(gadget.values())[0])
-                    if re_output:
-                        reg_d[re_output[0]] = gadget
 
-        # check for double pop
-        for c in POP_REG_COMBO_POOL["double"]:
-            for g in gadgetss:
-                gadget = g.search(c, 2)
-                if gadget:
-                    re_output = re.findall("e[a-d]x", gadget[1])
+        for k, v in POP_REG_COMBO_POOL.items():
+            for regex in v:
+                gg = Transpiler._first_matching_gadget(regex, *gadgetss)
+                if gg:
+                    re_output = re.findall("e[a-d]x", regex)
                     if re_output:
                         for reg in re_output:
-                            reg_d[reg] = gadget
-
-        # check for triple pop
-        for c in POP_REG_COMBO_POOL["triple"]:
-            for g in gadgetss:
-                gadget = g.search(c, 2)
-                if gadget:
-                    re_output = re.findall("e[a-d]x", gadget[1])
-                    if re_output:
-                        for reg in re_output:
-                            reg_d[reg] = gadget
-
-        # check for quad pop
-        for c in POP_REG_COMBO_POOL["quad"]:
-            for g in gadgetss:
-                gadget = g.search(c, 2)
-                if gadget:
-                    re_output = re.findall("e[a-d]x", gadget[1])
-                    if re_output:
-                        for reg in re_output:
-                            reg_d[reg] = gadget
-
-        # check for odd ones out
-        if not all(reg_d.values()):
-            raise ValueError("pop reg failed")
+                            reg_d[reg] = (gg, regex)
 
         # push all reg_d values in a set
         s = set()
-        for g in reg_d.items():
-            s.add(g)
+        for k, v in reg_d.items():
+            if v:
+                s.add(v)
+            else:
+                missing += [k]
 
-        ##################################################################
-        # need endianess; default little x86
         for g in s:
             # check the gagdet
-            chain += list(g[0])
+            chain += [g[0]]
             lst = re.findall("e[a-d]x", g[1])
             for e in lst:
                 if e == "eax":
-                    chain += list(struct.pack("<I", a))
+                    chain += [a]
                 if e == "ebx":
-                    chain += list(struct.pack("<I", b))
+                    chain += [b]
                 if e == "ecx":
-                    chain += list(struct.pack("<I", c))
+                    chain += [c]
                 if e == "edx":
-                    chain += list(struct.pack("<I", d))
+                    chain += [d]
 
-        return chain
+        return (chain, missing)
 
     @staticmethod
     def _pop_reg(reg, val, *gadgetss):
@@ -378,36 +352,52 @@ class Transpiler:
         ############################
         # Mprotect Pop method
         try:
-            chain = Transpiler._reg_assign(eax = 125, ebx = kwargs["buf"],
-                    ecx = kwargs["buflen"], edx = 7, *gadgetss)
-            #chain = Transpiler.mprotect_pop_reg_combo(
-            #    125,
-            #    kwargs["rop"],
-            #    kwargs["buflen"],
-            #    7,
-            #    *gadgetss)
-        except ValueError:
-            print("fallback")
-            # pop method failed; do other
+            # chain = Transpiler._reg_assign(eax=125, ebx=kwargs["buf"],
+            #                                ecx=kwargs["buflen"], edx=7, *gadgetss)
+            chain, missing = Transpiler.mprotect_pop_reg_combo(
+                125,
+                kwargs["buf"],
+                kwargs["buflen"],
+                7,
+                *gadgetss)
+
+            for m in missing:
+                if m == "eax":
+                    chain += [Transpiler._inc_reg_n(m, 125, *gadgetss)]
+                if m == "ebx":
+                    chain += [Transpiler._inc_reg_n(m,
+                                                    kwargs["buf"], *gadgetss)]
+                if m == "ecx":
+                    chain += [Transpiler._inc_reg_n(m,
+                                                    kwargs["buflen"], *gadgetss)]
+                if m == "edx":
+                    chain += [Transpiler._inc_reg_n(m, 7, *gadgetss)]
+            # detect if full chain. If not,
+            # use fallback methods to fill in the odd ones out
+        except ValueError as e:
+            traceback.print_exception(
+                type(e), e, e.__traceback__, file=sys.stderr)
 
             # `mov eax, (MPROTECT)`
-            chain += list(Transpiler._inc_reg_n("eax", 125, *gadgetss))
+            # chain += list(Transpiler._inc_reg_n("eax", 125, *gadgetss))
 
-            # `mov ebx, (ROP)`
+            # # `mov ebx, (ROP)`
 
-            chain += list(Transpiler._inc_reg_n("ebx", kwargs["rop"],
-                                                *gadgetss))
-            # `mov ecx, (BUFLEN)`
+            # chain += list(Transpiler._inc_reg_n("ebx", kwargs["rop"],
+            #                                     *gadgetss))
+            # # `mov ecx, (BUFLEN)`
 
-            chain += list(Transpiler._inc_reg_n("ecx", kwargs["buflen"],
-                                                *gadgetss))
-            # `mov edx, (PROT_EXEC | PROT_READ | PROT_WRITE)`
+            # chain += list(Transpiler._inc_reg_n("ecx", kwargs["buflen"],
+            #                                     *gadgetss))
+            # # `mov edx, (PROT_EXEC | PROT_READ | PROT_WRITE)`
 
-            chain += list(Transpiler._inc_reg_n("edx", 7, *gadgetss))
+            # chain += list(Transpiler._inc_reg_n("edx", 7, *gadgetss))
         # `int 0x80`
-
         chain.append(Transpiler._first_matching_gadget(
             "int 0x80", *gadgetss))
+        print("---")
+        print(chain)
+        print("---")
         return b"".join(chain)
 
 
@@ -415,7 +405,7 @@ if __name__ == "__main__":
     # localized: `os` and `sys` were already imported;
     # generate an `mprotect` chain for x86-32 Linux
 
-    sys.argv += ["/usr/lib/i386-linux-gnu/libc.so.6"]
+    sys.argv += ["../libc.so.6"]
     chain = Transpiler.chain("mprotect", buf=0x1, buflen=0x2,
                              rop=-0x1, *[iio.MachineCodeIO.ploadall(p) for p in sys.argv[1:]])
 

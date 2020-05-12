@@ -1,6 +1,16 @@
 import capstone
 import re
 
+try:
+    from . import iio
+except ImportError:
+    import os
+    import sys
+
+    sys.path.append(os.path.realpath(__file__))
+
+    import iio
+
 
 class Gadgets:
     def __init__(self, cap):
@@ -45,7 +55,8 @@ class Gadgets:
                 self.gadgets[g_point] = []
 
             if isgadget:
-                self.gadgets[g_point].insert(0, (i.address, i.mnemonic + (' ' if i.op_str else '') + i.op_str))
+                self.gadgets[g_point].insert(
+                    0, (i.address, i.mnemonic + (' ' if i.op_str else '') + i.op_str))
                 if len(self.gadgets[g_point]) > self.depth:
                     isgadget = False  # end gadget chain
 
@@ -57,7 +68,7 @@ class Gadgets:
             3 = print gadget not found
         """
         pattern = "; ".join(i.strip() for i in pattern.split(';') if i.strip())
-        
+
         glist = {}
         if verbose:
             print("pattern:", pattern)
@@ -82,7 +93,7 @@ class Gadgets:
     def parse_glist(self, gin, p):
         gout = {}
         plen = len(p.split(';'))
-        
+
         for _, v in gin.items():
             for i in range(len(v)-plen+1):
                 s = self.__tostring(v[i:i+plen]).split('\t')[1]
@@ -92,10 +103,10 @@ class Gadgets:
 
 
 if __name__ == "__main__":
-    code = b"\x4d\x39\x52\x54\x67\xc3\x5e\x72\x93\xe3\x73\x72\x5a\x5c\xc3\x5a\xc3"
-    md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)
-    g = Gadgets(md.disasm(code, 0x0))
-    
+    compiled = iio.MachineCodeIO.ploadall("../libc.so.6")
+    print(compiled.keys())
+    g = Gadgets(compiled["instructions"])
+
     print(g)
     print('----------------')
     print("search return:", g.search('pop ...; ret ;', 2))
