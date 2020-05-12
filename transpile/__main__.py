@@ -133,7 +133,8 @@ def main(argv):
         elif k == "-t":
             text = True
 
-    if not isas:
+    if not isas \
+            and not chain:
         print("Empty ISA.", file = sys.stderr)
         help(argv[0])
         return 1
