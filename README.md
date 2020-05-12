@@ -33,7 +33,8 @@ See [the SDD](SDD.md).
 			- ~~`chain` option~~
 				- ~~`mprotect` sub-option~~
 		- ~~argument validation~~
-		- adapt to `iio.*.pload*`
+		- ~~adapt to `iio.*.pload*`~~
+		- properly handle no arguments (print help message & return 1)
 - `transpile`
 	- `Transpiler`
 		- rethink `__init__` interface (move args to `__call__`?)
