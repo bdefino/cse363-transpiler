@@ -146,10 +146,10 @@ class Transpiler:
         instances
         """
         for g in gadgetss:
-            gadget = g.search(pattern)
+            gadgets = g.search(pattern)
 
-            if g is not None:
-                return gadget
+            if gadgets:
+                return list(gadgets.keys())[0]
         return None
 
     @staticmethod
@@ -198,7 +198,7 @@ class Transpiler:
     def _reg_assign(*gadgetss, **regs):
         """
         return a chain for assigning a value to a register;
-        these values MAY include miscellaneous types:
+        these values MAY include non-`bytes` values:
         which should be interpreted as REGISTER CONTENTS
         (endianness to be determined by the caller)
         """
@@ -213,10 +213,11 @@ class Transpiler:
         while nregs > 0:
             for perm in itertools.permutations(unmatched.keys(), nregs):
                 pattern = ';'.join(["pop " + r for r in perm] + ["ret"])
-                gadget = Transpiler._first_matching_gadget(pattern, *gadgetss)
+                gadgets = Transpiler._first_matching_gadget(pattern, *gadgetss)
 
-                if not gadget:
+                if not gadgets:
                     continue
+                gadget = list(gadgets.keys())[0]
 
                 for reg in perm:
                     matched[reg] = gadget
@@ -227,13 +228,13 @@ class Transpiler:
         # populate matched registers
 
         for reg, gadget in matched.items():
-            chain.append(gadget[0])
+            chain.append(gadget[1])
             chain.append(regs[reg])
 
         # populate unmatched registers incrementally
 
         for reg, n in unmatched.items():
-            subchain = Transpiler._inc_reg_n(reg, n, *gadgets)
+            subchain = Transpiler._inc_reg_n(reg, n, *gadgetss)
 
             if not subchain:
                 return
@@ -260,7 +261,7 @@ class Transpiler:
             for g in gadgetss:
                 gadget = g.search(c, 2)
                 if gadget:
-                    re_output = re.findall("e[a-d]x", gadget.values()[0])
+                    re_output = re.findall("e[a-d]x", list(gadget.values())[0])
                     if re_output:
                         reg_d[re_output[0]] = gadget
 
@@ -408,7 +409,7 @@ if __name__ == "__main__":
     # generate an `mprotect` chain for x86-32 Linux
 
     sys.argv += ["../linux_32"]
-    chain = Transpiler.chain("mprotect", buf=0xEEEEEEEE, buflen=0xFFFFFFFF,
+    chain = Transpiler.chain("mprotect", buf=0x1, buflen=0x2,
                              rop=-0x1, *[iio.MachineCodeIO.ploadall(p) for p in sys.argv[1:]])
 
     with os.fdopen(sys.stdout.fileno(), "wb") as fp:
