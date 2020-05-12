@@ -59,27 +59,32 @@ class Gadgets:
         """
         pattern = "; ".join(i.strip() for i in pattern.split(';') if i.strip())
         
-        print(pattern)
         glist = {}
         if verbose:
-            print("target pattern:", pattern)
+            print("pattern:", pattern)
 
         for k in self.gadgets.keys():
-            addr = self.gadgets[k][0]
+            addr = self.gadgets[k][0][0]
             g = self.__tostring(k)
+            #print("g : ",g)
             if re.search(pattern, g):
                 if verbose >= 2:
                     print(g)
-                glist[addr] = g
+                glist[addr] = self.gadgets[k]
 
         if glist != {}:
             if verbose >= 1:
                 print("gadget found")
-            return glist
+            return self.parse_glist(glist, pattern)
         else:
             if verbose >= 3:
                 print("gadget not found")
             return None
+
+    def parse_glist(self, gin, p):
+        # re.match
+        # re.findall
+        return gin
 
 
 if __name__ == "__main__":
@@ -87,9 +92,8 @@ if __name__ == "__main__":
     md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)
     g = Gadgets(md.disasm(code, 0x0))
     
+    print(g.gadgets)
+    print('----------------')
     print(g)
     print('----------------')
-    for i in g.gadgets:
-        print(g.gadgets, end='\n\n')
-    print('----------------')
-    g.search('pop ...; ret ;', 2)
+    print(g.search('pop ...; ret ;', 2))
