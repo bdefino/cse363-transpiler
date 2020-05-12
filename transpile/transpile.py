@@ -284,7 +284,7 @@ class Transpiler:
                     # attempt to fully match `pop MATCHED; move REG`
 
                     pop_move = Transpiler._first_matching_gadget(
-                        "pop %s;mov %s, %s;ret" % (m, u, d), *gadgetss)
+                        "pop %s;mov %s, %s;ret" % (d, u, d), *gadgetss)
 
                     if pop_move:
                         chain += [pop_move, regs[u]]
