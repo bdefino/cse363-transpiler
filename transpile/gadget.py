@@ -81,15 +81,13 @@ class Gadgets:
 
     def parse_glist(self, gin, p):
         gout = {}
-
         plen = len(p.split(';'))
         
         for _, v in gin.items():
             for i in range(len(v)-plen+1):
-                s = self.__tostring(v[i:i+plen])
-                if re.search(p, s):
+                s = self.__tostring(v[i:i+plen]).split('\t')[1]
+                if re.match(p, s):
                     gout[v[i][0]] = s
-
         return gout
 
 
