@@ -212,7 +212,7 @@ class Transpiler:
         (endianness to be determined by the caller)
         """
 
-        # attempt to match (sub)permutations
+        # attempt to match (sub)permutations of direct `pop REG`s
 
         chain = []
         matched = {} # `{gadget address: ordered regs}`
@@ -239,19 +239,30 @@ class Transpiler:
                 nregs -= 1
             nregs = min((len(unmatched), nregs))
 
+        if matched:
+            # attempt to match unmatched registers indirectly
+            # (via `pop TEMP;move REG, TEMP`)
+
+            mgs = [g.search("pop %s;ret" % r) for r in matched.keys()]
+
+            for reg in set(unmatched): # copy
+                for mg in mgs:
+                    pass#######
+
         # populate matched registers
 
         for rs, g in matched.items():
             # add gadget
 
             chain.append(g)
-            
+
             # add values
 
             for r in rs:
                 chain.append(regs[r])
 
         # populate unmatched registers incrementally
+        # (via `xor REG, REG;inc/dec REG;...`)
 
         for r in unmatched:
             subchain = Transpiler._inc_reg_n(r, regs[r], *gadgetss)
