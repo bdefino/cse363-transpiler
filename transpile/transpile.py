@@ -279,15 +279,21 @@ class Transpiler:
                 and unmatched:
             # attempt to indirectly assign via `pop MATCHED; mov REG`########################################################DIFFERENT POOL
 
+            pool = set(regs.keys())
+
             for u in set(unmatched):
-                for d in set(regs.keys()).difference(unmatched):
+                for d in set(pool): # copy
                     # attempt to fully match `pop MATCHED; mov REG`
+
+                    if d == u:
+                        continue
 
                     pop_move = Transpiler._first_matching_gadget(
                         "pop %s;mov %s, %s;ret" % (d, u, d), *gadgetss)
 
                     if pop_move:
                         chain += [pop_move, regs[u]]
+                        pool.remove(d)
                         unmatched.remove(u)
                         break
 
@@ -304,6 +310,7 @@ class Transpiler:
                     if move is None:
                         break
                     chain += [pop, regs[u], move]
+                    pool.remove(d)
                     unmatched.remove(u)
 
         # populate directly-loadable registers
