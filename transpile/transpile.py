@@ -186,7 +186,7 @@ class Transpiler:
 
             if gadgets:
                 addr, gadget = list(gadgets.items())[0]
-                print("0x%x\t%s" % (addr, gadget))
+                print("0x%x\t\t%s" % (addr, gadget))
                 return addr
         return None
 
@@ -422,8 +422,8 @@ class Transpiler:
         gadgetss = set()
 
         for o in objs:
-            for n, e in o.items():
-                print("Loading gadgets from objects (extent \"%s\")..." % n)
+            for no, e in o.items():
+                print("Loading gadgets from object (extent \"%s\", offset %u)..." % no)
                 e["gadgets"] = gadget.Gadgets(e["instructions"])
                 gadgetss.add(e["gadgets"])
 
