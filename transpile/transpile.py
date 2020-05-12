@@ -149,8 +149,9 @@ class Transpiler:
             gadgets = g.search(pattern)
 
             if gadgets:
+                print(gadgets)
                 return list(gadgets.keys())[0]
-        print(pattern)
+        #print(pattern)
         return None
 
     @staticmethod
