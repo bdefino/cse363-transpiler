@@ -150,6 +150,7 @@ class Transpiler:
 
             if gadgets:
                 return list(gadgets.keys())[0]
+        print(pattern)
         return None
 
     @staticmethod
@@ -157,13 +158,17 @@ class Transpiler:
         """incrementally fill a register"""
         # zero out the register
 
-        chain = [Transpiler._first_matching_gadget("xor %s, %s" % (reg, reg),
+        chain = [Transpiler._first_matching_gadget("xor %s, %s;ret" % (reg, reg),
                                                    *gadgetss)]
 
         # fill the register
 
         g = Transpiler._first_matching_gadget(
-            ("dec %s" if n < 0 else "inc %s") % reg, *gadgetss)
+            ("dec %s;ret" if n < 0 else "inc %s;ret") % reg, *gadgetss)
+
+        if g is None:
+            print((reg, n, g))
+            return
         increment = -1 if n < 0 else 1
 
         while n:
@@ -213,11 +218,10 @@ class Transpiler:
         while nregs > 0:
             for perm in itertools.permutations(unmatched.keys(), nregs):
                 pattern = ';'.join(["pop " + r for r in perm] + ["ret"])
-                gadgets = Transpiler._first_matching_gadget(pattern, *gadgetss)
+                g = Transpiler._first_matching_gadget(pattern, *gadgetss)
 
-                if not gadgets:
+                if g is None:
                     continue
-                g = gadgets.keys()[0]
 
                 for reg in perm:
                     matched[reg] = g
@@ -228,7 +232,7 @@ class Transpiler:
         # populate matched registers
 
         for reg, g in matched.items():
-            chain.append(g[1])
+            chain.append(g)
             chain.append(regs[reg])
 
         # populate unmatched registers incrementally
@@ -236,7 +240,7 @@ class Transpiler:
         for reg, n in unmatched.items():
             subchain = Transpiler._inc_reg_n(reg, n, *gadgetss)
 
-            if not subchain:
+            if subchain is None:
                 return
             chain += subchain
         return chain
@@ -410,7 +414,7 @@ if __name__ == "__main__":
     # localized: `os` and `sys` were already imported;
     # generate an `mprotect` chain for x86-32 Linux
 
-    sys.argv += ["../linux_32"]
+    sys.argv += ["/usr/lib/i386-linux-gnu/libc.so.6"]
     chain = Transpiler.chain("mprotect", buf=0x1, buflen=0x2,
                              rop=-0x1, *[iio.MachineCodeIO.ploadall(p) for p in sys.argv[1:]])
 
