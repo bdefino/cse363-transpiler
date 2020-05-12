@@ -201,7 +201,7 @@ class Transpiler:
         return False
 
     @staticmethod
-    def _reg_assign(*gadgetss, **regs):
+    def _reg_assign(temp_reg = None, *gadgetss, **regs):#########################################incorporate temporary registers
         """
         return a chain for assigning a value to a register;
         these values MAY include non-`bytes` values:
@@ -217,6 +217,8 @@ class Transpiler:
         unmatched = set(regs.keys())
 
         while nregs > 0:
+            matched_any = False
+
             for perm in itertools.permutations(unmatched, nregs):
                 pattern = ';'.join(["pop " + r for r in perm] + ["ret"])
                 g = Transpiler._first_matching_gadget(pattern, *gadgetss)
@@ -227,8 +229,12 @@ class Transpiler:
                 for r in perm:
                     unmatched.remove(r)
                 matched[tuple(perm)] = g
-                nregs -= len(perm)
-            nregs -= 1
+                matched_any = True
+                break
+
+            if not matched_any:
+                nregs -= 1
+            nregs = min((len(unmatched), nregs))
 
         # populate matched registers
 
