@@ -52,6 +52,7 @@ See [the SDD](SDD.md).
 				interpreted as register contents))
 	- **test**
 - ARGUMENT VALIDATION
+- demo
 
 # Sources
 - [Capstone](https://www.capstone-engine.org)
