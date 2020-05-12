@@ -277,11 +277,11 @@ class Transpiler:
 
         if direct \
                 and unmatched:
-            # attempt to indirectly assign via `pop MATCHED; move REG`
+            # attempt to indirectly assign via `pop MATCHED; mov REG`
 
             for u in set(unmatched):
                 for d in set(regs.keys()).difference(unmatched):
-                    # attempt to fully match `pop MATCHED; move REG`
+                    # attempt to fully match `pop MATCHED; mov REG`
 
                     pop_move = Transpiler._first_matching_gadget(
                         "pop %s;mov %s, %s;ret" % (d, u, d), *gadgetss)
@@ -299,7 +299,7 @@ class Transpiler:
                     if pop is None:
                         break
                     move = Transpiler._first_matching_gadget(
-                        "move %s, %s;ret" % (u, d), *gadgetss)
+                        "mov %s, %s;ret" % (u, d), *gadgetss)
 
                     if move is None:
                         break
