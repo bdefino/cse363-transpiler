@@ -251,7 +251,7 @@ class Transpiler:
 
             for r in set(unmatched): # copy
                 moves = {d: Transpiler._first_matching_gadget(
-                    "move %s, %s" % (d, r), *gadgetss) for d in pops.keys()]
+                    "move %s, %s" % (d, r), *gadgetss) for d in pops.keys()}
                 moves = {k: v for k, v in moves.items() if v is not None}
 
                 if not moves:
