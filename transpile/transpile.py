@@ -182,7 +182,7 @@ class Transpiler:
         instances
         """
         for g in gadgetss:
-            gadgets = g.search(pattern, 3)
+            gadgets = g.search(pattern)
 
             if gadgets:
                 addr, gadget = list(gadgets.items())[0]
@@ -446,11 +446,11 @@ class Transpiler:
         # `int 0x80`
 
         chain.append(Transpiler._first_matching_gadget(
-            "int 0x80;", *gadgetss))
+            "int 0x80", *gadgetss))
 
         if chain[-1] is None:
             return
-        print(chain)
+        chain.append(kwargs["buf"])
         return chain
 
 
