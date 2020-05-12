@@ -275,22 +275,6 @@ class Transpiler:
                 nregs -= 1
             nregs = min((len(unmatched), nregs))
 
-        if False:#############matched:
-            # attempt to match unmatched registers indirectly
-            # (via `pop TEMP;move REG, TEMP`)
-
-            pops = {r: g.search("pop %s;ret" % r) for r in matched.keys()}
-            pops = {k: v for k, v in pops.items() if v is not None}
-
-            for r in set(unmatched): # copy
-                moves = {d: Transpiler._first_matching_gadget(
-                    "move %s, %s" % (d, r), *gadgetss) for d in pops.keys()}
-                moves = {k: v for k, v in moves.items() if v is not None}
-
-                if not moves:
-                    continue
-                r, move = list(moves.items())[0]#######################################################
-
         # populate matched registers
 
         for rs, pop in matched.items():
