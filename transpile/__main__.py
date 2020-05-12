@@ -89,7 +89,7 @@ def main(argv):
         return 1
 
     try:
-        target, sources = args[0], {k:v for k, v in (parse_source(a)
+        target, sources = args[0], {k: (b, v) for k, b, v in (parse_source(a)
             for a in args[1:])}
 
         if not sources:
@@ -144,11 +144,12 @@ def main(argv):
         return 1
 
     try:
+        sources = [iio.MachineCodeIO.ploadall(k, v[0], **v[1])
+            for k, v in sources.items()]
+
         if chain:
-            print(sources)
             output = transpile.Transpiler.chain(target, buf = buf,
-                buflen = buflen, rop = rop,
-                *[iio.MachineCodeIO.ploadall(s) for s in sources])
+                buflen = buflen, rop = rop, *sources)
         else:
             if text:
                 target = {None: iio.AssemblyIO.pload(target, isa.parse(isas))}
