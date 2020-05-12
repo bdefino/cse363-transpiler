@@ -48,7 +48,7 @@ class BaseInstructionIO:
         raise NotImplementedError()
 
     @staticmethod
-    def loadall(fp, extents=None):
+    def loadall(fp, base = 0, extents=None):
         """load all executable extents from a file"""
         raise NotImplementedError()
 
@@ -63,7 +63,7 @@ class BaseInstructionIO:
         raise NotImplementedError()
 
     @staticmethod
-    def ploadall(path, extents=None):
+    def ploadall(path, base = 0, extents=None):
         """load all executable extents at a path"""
         raise NotImplementedError()
 
@@ -146,7 +146,7 @@ class MachineCodeIO(AssemblyIO):
         }
 
     @staticmethod
-    def loadall(fp, extents=None):
+    def loadall(fp, base = 0, extents=None):
         """load all executable extents from a file"""
 
         # load the binary
@@ -169,7 +169,7 @@ class MachineCodeIO(AssemblyIO):
         extents = {k: {"base": v} for k, v in extents.items()}
 
         for extent in binary.executable_sections:
-            base = extents[extent.name] \
+            _base = extents[extent.name] \
                 if isinstance(extents.get(extent.name, None), int) \
                 else extent.addr
             code = io.BytesIO(extent.code)
@@ -177,7 +177,8 @@ class MachineCodeIO(AssemblyIO):
             for offset in range(min(16, extent.size)): # Intel-specific##############################################################
                 print("Loading extent from object (extent \"%s\", offset %u)..." % (extent.name, offset))
                 code.seek(0, os.SEEK_SET)
-                extents[(extent.name, offset)] = MachineCodeIO.load(io.BytesIO(code.read()), _isa, base, offset)
+                extents[(extent.name, offset)] = MachineCodeIO.load(
+                    io.BytesIO(code.read()), _isa, base + _base, offset)
 
         # filter out unmatched extents
 
@@ -200,10 +201,10 @@ class MachineCodeIO(AssemblyIO):
             return MachineCodeIO.load(fp, base, offset)
 
     @staticmethod
-    def ploadall(path, extents=None):
+    def ploadall(path, base = 0, extents=None):
         """load all executable extents at a path"""
         with open(path, "rb") as fp:
-            return MachineCodeIO.loadall(fp, extents)
+            return MachineCodeIO.loadall(fp, base, extents)
 
 
 if __name__ == "__main__":

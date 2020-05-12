@@ -17,9 +17,10 @@ except ImportError:
 
 
 __doc__ = """transpile: compose an ROP payload
-Usage: %s [OPTIONS] TARGET SOURCE[:SECTION=BASE...] ...
+Usage: %s [OPTIONS] TARGET SOURCE[=BASE][:SECTION=BASE...] ...
 BASE
-    force overwrite the base address for a SECTION within a SOURCE
+    force overwrite the base address for a specific SECTION,
+    or the entire SOURCE
 EXAMPLES
     make the stack executable for the 2-byte payload at address 1:
         `%s -b 1 -c -l 2 -p 3 mprotect /usr/lib32/libc.so`
@@ -168,12 +169,18 @@ def main(argv):
     return 0
 
 def parse_source(s):
-    """parse `(path, {section: base})` from `"PATH[:SECTION=BASE...]"`"""
+    """parse `(path, base, {section: base})` from `"PATH[:SECTION=BASE...]"`"""
+    base = 0
     path = s
     sections = {}
 
     if ':' in s:
-        path, s = s.split(':', 1)
+        if '=' in s:
+            path, s = s.split('=', 1)
+            base, s = s.split(':', 1)
+            base = int(base)
+        else:
+            path, s = s.split(':', 1)
 
         for sb in s.split(':'):
             if not '=' in sb:
@@ -184,7 +191,10 @@ def parse_source(s):
                 sections[section] = int(base)
             except ValueError:
                 raise ValueError("invalid section specifier")
-    return path, sections
+    elif '=' in s:
+        path, s = s.split('=', 1)
+        base = int(s)
+    return path, base, sections
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv))
