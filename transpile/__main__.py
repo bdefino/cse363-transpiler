@@ -19,7 +19,10 @@ except ImportError:
 __doc__ = """transpile: compose an ROP payload
 Usage: %s [OPTIONS] TARGET SOURCE[:SECTION=BASE...] ...
 BASE
-  force overwrite the base address for a SECTION within a SOURCE
+    force overwrite the base address for a SECTION within a SOURCE
+EXAMPLES
+    make the stack executable for the 2-byte payload at address 1:
+        `%s -b 1 -c -l 2 -p 3 mprotect /usr/lib32/libc.so`
 OPTIONS
     -a
         explore all possible gadgets
@@ -61,7 +64,7 @@ TARGET
         (more to come)"""
 
 def help(name):
-    print(__doc__ % name, file = sys.stderr)
+    print(__doc__ % (name, name), file = sys.stderr)
 
 def main(argv):
     all_permutations = False
@@ -141,6 +144,7 @@ def main(argv):
 
     try:
         if chain:
+            print(sources)
             output = transpile.Transpiler.chain(target, buf = buf,
                 buflen = buflen, rop = rop,
                 *[iio.MachineCodeIO.ploadall(s) for s in sources])
@@ -154,7 +158,7 @@ def main(argv):
 
         if opath == '-':
             with os.fdopen(sys.stdout.fileno(), "wb") as fp:
-                fp.write(fp)
+                fp.write(output)
         else:
             with open(opath, "wb") as fp:
                 fp.write(output)
@@ -165,7 +169,7 @@ def main(argv):
 
 def parse_source(s):
     """parse `(path, {section: base})` from `"PATH[:SECTION=BASE...]"`"""
-    path = None
+    path = s
     sections = {}
 
     if ':' in s:
