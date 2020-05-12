@@ -467,5 +467,5 @@ if __name__ == "__main__":
     chain = Transpiler.chain("mprotect", buf=0x1, buflen=0x2,
                              rop=-0x1, *[iio.MachineCodeIO.ploadall(p) for p in sys.argv[1:]])
 
-    with os.fdopen(sys.stdout.fileno(), "wb") as fp:
+    with open("mprotect-chain", "wb") as fp:
         fp.write(chain)
