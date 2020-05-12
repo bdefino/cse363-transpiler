@@ -139,8 +139,11 @@ def main(argv):
             output = transpile.Transpiler.chain(target, buf = buf,
                 buflen = buflen, rop = rop, *sources)
         else:
-            target = (iio.AssemblyIO if text else iio.MachineCodeIO).load(
-                isa.parse(isas), target)
+            if text:
+                target = iio.AssemblyIO.pload(target, isa.parse(isas))
+            else:
+                target = iio.MachineIO.ploadall(target)
+            #target = (iio.AssemblyIO if text else iio.MachineCodeIO).load(isa.parse(isas), target)
             output = transpiler.Transpiler(target, all_permutations, recurse)
 
         if opath == '-':
