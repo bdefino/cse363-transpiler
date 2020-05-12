@@ -26,13 +26,13 @@ class CodeSlice:
     def __init__(self, header_type, name, binary_arr, addr, offset):
         self.header_type = header_type
         self.name = name
-        self.binary_arr = binary_arr
+        self.code = bytes(binary_arr)
         self.addr = addr
         self.offset = offset
 
     @property
     def size(self):
-        return len(self.binary_arr)
+        return len(self.code)
 
 
 class Binary:
@@ -163,5 +163,11 @@ if __name__ == "__main__":
     f = open("../linux_32", "br")
     x = f.read()
     head = Binary(x)
-    e = head.executable_sections
-    print(e)
+    slices = head.executable_sections
+    md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)
+    for s in slices:
+        print(s.name)
+        print(s.size)
+
+        for i in md.disasm(s.code, 0x0):
+            print("0x%x:\t%s\t%s" % (i.address, i.mnemonic, i.op_str))
