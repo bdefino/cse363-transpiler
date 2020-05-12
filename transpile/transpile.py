@@ -212,34 +212,40 @@ class Transpiler:
         # attempt to match (sub)permutations
 
         chain = []
-        matched = {}
+        matched = {} # `{gadget address: ordered regs}`
         nregs = len(regs)
-        unmatched = regs.copy()
+        unmatched = set(regs.keys())
 
         while nregs > 0:
-            for perm in itertools.permutations(unmatched.keys(), nregs):
+            for perm in itertools.permutations(unmatched, nregs):
                 pattern = ';'.join(["pop " + r for r in perm] + ["ret"])
                 g = Transpiler._first_matching_gadget(pattern, *gadgetss)
 
                 if g is None:
                     continue
 
-                for reg in perm:
-                    matched[reg] = g
-                    del unmatched[reg]
+                for r in perm:
+                    unmatched.remove(r)
+                matched[tuple(perm)] = g
                 nregs -= len(perm)
             nregs -= 1
 
         # populate matched registers
 
-        for reg, g in matched.items():
+        for rs, g in matched.items():
+            # add gadget
+
             chain.append(g)
-            chain.append(regs[reg])
+            
+            # add values
+
+            for r in rs:
+                chain.append(regs[r])
 
         # populate unmatched registers incrementally
 
-        for reg, n in unmatched.items():
-            subchain = Transpiler._inc_reg_n(reg, n, *gadgetss)
+        for r in unmatched:
+            subchain = Transpiler._inc_reg_n(r, regs[r], *gadgetss)
 
             if subchain is None:
                 return
