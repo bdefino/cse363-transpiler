@@ -44,7 +44,7 @@ See [the SDD](SDD.md).
 				should be specialized?)
 		- `chain`
 		- `_inc_reg_n`
-		- `_regassign`
+		- `_reg_assign`
 		- `mprotect`
 			- per-ISA discrimination (favor x86-32/Linux)
 			- MUST treat subchains as containing mixed values
