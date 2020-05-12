@@ -48,6 +48,11 @@ class BaseInstructionIO:
         raise NotImplementedError()
 
     @staticmethod
+    def loadall(fp, extents=None):
+        """load all executable extents from a file"""
+        raise NotImplementedError()
+
+    @staticmethod
     def pdump(path, extent):
         """dump a single executable extent to a path"""
         raise NotImplementedError()
@@ -146,29 +151,12 @@ class MachineCodeIO(AssemblyIO):
         }
 
     @staticmethod
-    def pdump(path, extent):
-        """load a single executable extent to a path"""
-        _isa = isa.correlate(copy.deepcopy(extent["isa"]))
-
-        with open(path, "wb") as fp:
-            MachineCodeIO.dump(fp, extent)
-
-    @staticmethod
-    def pload(path, _isa, offset=0):
-        """load a single executable extent at a path"""
-        _isa = isa.correlate(copy.deepcopy(_isa))
-
-        with open(path, "rb") as fp:
-            return MachineCodeIO.load(fp)
-
-    @staticmethod
-    def ploadall(path, extents=None):
-        """load all executable extents at a path"""
+    def loadall(fp, extents=None):
+        """load all executable extents from a file"""
 
         # load the binary
 
-        with open(path, "rb") as fp:
-            binary = analyze.Binary(fp.read())
+        binary = analyze.Binary(fp.read())
 
         # compute the complete _isa
 
@@ -198,6 +186,28 @@ class MachineCodeIO(AssemblyIO):
         # filter out unmatched extents
 
         return {k: v for k, v in extents.items() if len(v.keys()) > 1}
+
+    @staticmethod
+    def pdump(path, extent):
+        """load a single executable extent to a path"""
+        _isa = isa.correlate(copy.deepcopy(extent["isa"]))
+
+        with open(path, "wb") as fp:
+            MachineCodeIO.dump(fp, extent)
+
+    @staticmethod
+    def pload(path, _isa, offset=0):
+        """load a single executable extent at a path"""
+        _isa = isa.correlate(copy.deepcopy(_isa))
+
+        with open(path, "rb") as fp:
+            return MachineCodeIO.load(fp)
+
+    @staticmethod
+    def ploadall(path, extents=None):
+        """load all executable extents at a path"""
+        with open(path, "rb") as fp:
+            return MachineCodeIO.loadall(fp, extents)
 
 
 if __name__ == "__main__":
