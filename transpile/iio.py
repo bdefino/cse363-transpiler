@@ -176,7 +176,7 @@ class MachineCodeIO(AssemblyIO):
 
             for offset in range(15): # Intel-specific##############################################################
                 code.seek(0, os.SEEK_SET)
-                extents[extent.name +] = MachineCodeIO.load(code, _isa, base,
+                extents[extent.name] = MachineCodeIO.load(code, _isa, base,
                     offset)
 
         # filter out unmatched extents
