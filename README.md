@@ -45,6 +45,7 @@ See [the SDD](SDD.md).
 		- `chain`
 		- `_inc_reg_n`
 		- `_reg_assign`
+			- `pop TEMP; mov REG` -> second-most preferable
 		- `mprotect`
 			- per-ISA discrimination (favor x86-32/Linux)
 			- MUST treat subchains as containing mixed values
