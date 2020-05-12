@@ -167,12 +167,11 @@ class Transpiler:
 
         g = None
 
-        if n < 0:
-            g = Transpiler._first_matching_gadget(
-                "((add %s, -1)|(dec %s)|(sub %s, 1));ret" % (reg, reg, reg))
-        else:
-            g = Transpiler._first_matching_gadget(
-                "((add %s, 1)|(inc %s)|(sub %s, -1));ret" % (reg, reg, reg))
+        g = Transpiler._first_matching_gadget(
+            "((add %s, -1)|(dec %s)|(sub %s, 1));ret" % (reg, reg, reg)
+                if n < 0 else
+                    "((add %s, 1)|(inc %s)|(sub %s, -1));ret" % (reg, reg, reg),
+            *gadgetss)
 
         if g is None:
             return
@@ -384,9 +383,9 @@ class Transpiler:
         ############################
         # Mprotect Pop method
         try:
-            # chain = Transpiler._reg_assign(eax=125, ebx=kwargs["buf"],
-            #                                ecx=kwargs["buflen"], edx=7, *gadgetss)
-            chain, missing = Transpiler.mprotect_pop_reg_combo(
+            chain = Transpiler._reg_assign(eax=125, ebx=kwargs["buf"],
+                                            ecx=kwargs["buflen"], edx=7, *gadgetss)
+            """chain, missing = Transpiler.mprotect_pop_reg_combo(
                 125,
                 kwargs["buf"],
                 kwargs["buflen"],
@@ -405,7 +404,7 @@ class Transpiler:
                 if m == "edx":
                     chain += [Transpiler._inc_reg_n(m, 7, *gadgetss)]
             # detect if full chain. If not,
-            # use fallback methods to fill in the odd ones out
+            # use fallback methods to fill in the odd ones out"""
         except ValueError as e:
             traceback.print_exception(
                 type(e), e, e.__traceback__, file=sys.stderr)
