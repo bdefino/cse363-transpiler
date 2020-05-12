@@ -260,7 +260,7 @@ class Transpiler:
             for g in gadgetss:
                 gadget = g.search(c, 2)
                 if gadget:
-                    re_output = re.findall("e[a-d]x", gadget[1])
+                    re_output = re.findall("e[a-d]x", gadget.values()[0])
                     if re_output:
                         reg_d[re_output[0]] = gadget
 
