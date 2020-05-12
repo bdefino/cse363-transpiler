@@ -180,7 +180,7 @@ class Transpiler:
 
             if gadgets:
                 addr, gadget = list(gadgets.items())[0]
-                print("%x\t%s" % (addr, gadget))
+                print("0x%x\t%s" % (addr, gadget))
                 return addr
         return None
 
