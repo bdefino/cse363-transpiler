@@ -143,7 +143,7 @@ def main(argv):
         if chain:
             output = transpile.Transpiler.chain(target, buf = buf,
                 buflen = buflen, rop = rop,
-                *[iio.MachineIO.ploadall(s) for s in sources])
+                *[iio.MachineCodeIO.ploadall(s) for s in sources])
         else:
             if text:
                 target = {None: iio.AssemblyIO.pload(target, isa.parse(isas))}
