@@ -204,7 +204,7 @@ class Transpiler:
         return False
 
     @staticmethod
-    def _reg_assign(*gadgetss, **regs):
+    def _reg_assign(temp_reg = None, *gadgetss, **regs):#########################################incorporate temporary registers
         """
         return a chain for assigning a value to a register;
         these values MAY include non-`bytes` values:
@@ -215,34 +215,46 @@ class Transpiler:
         # attempt to match (sub)permutations
 
         chain = []
-        matched = {}
+        matched = {} # `{gadget address: ordered regs}`
         nregs = len(regs)
-        unmatched = regs.copy()
+        unmatched = set(regs.keys())
 
         while nregs > 0:
-            for perm in itertools.permutations(unmatched.keys(), nregs):
+            matched_any = False
+
+            for perm in itertools.permutations(unmatched, nregs):
                 pattern = ';'.join(["pop " + r for r in perm] + ["ret"])
                 g = Transpiler._first_matching_gadget(pattern, *gadgetss)
 
                 if g is None:
                     continue
 
-                for reg in perm:
-                    matched[reg] = g
-                    del unmatched[reg]
-                nregs -= len(perm)
-            nregs -= 1
+                for r in perm:
+                    unmatched.remove(r)
+                matched[tuple(perm)] = g
+                matched_any = True
+                break
+
+            if not matched_any:
+                nregs -= 1
+            nregs = min((len(unmatched), nregs))
 
         # populate matched registers
 
-        for reg, g in matched.items():
+        for rs, g in matched.items():
+            # add gadget
+
             chain.append(g)
-            chain.append(regs[reg])
+            
+            # add values
+
+            for r in rs:
+                chain.append(regs[r])
 
         # populate unmatched registers incrementally
 
-        for reg, n in unmatched.items():
-            subchain = Transpiler._inc_reg_n(reg, n, *gadgetss)
+        for r in unmatched:
+            subchain = Transpiler._inc_reg_n(r, regs[r], *gadgetss)
 
             if subchain is None:
                 return

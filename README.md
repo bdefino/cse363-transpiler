@@ -52,6 +52,8 @@ See [the SDD](SDD.md).
 				(e.g. bytes and integers (integers should be
 				interpreted as register contents))
 	- **test**
+- regexes (e.g. `re.findall("pop e.x; (?!pop e.x; )ret", "pop eax; pop ebx; pop ecx; ret")`)?
+- BASE ADDRESS INTEGRATION????
 - ARGUMENT VALIDATION
 - demo
 
