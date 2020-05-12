@@ -240,7 +240,7 @@ class Transpiler:
         return False
 
     @staticmethod
-    def _reg_assign(temp_reg = None, *gadgetss, **regs):#########################################incorporate temporary registers
+    def _reg_assign(*gadgetss, **regs):#########################################incorporate temporary registers
         """
         return a chain for assigning a value to a register;
         these values MAY include non-`bytes` values:
