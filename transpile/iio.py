@@ -30,7 +30,7 @@ class BaseInstructionIO:
             "base": base,
             "instructions": iterable of capstone.CsInsn,
             "isa": ISA,
-            "shift": shift (for variable-length ISAs)
+            "offset": offset from the base (for variable-length ISAs)
         }
         ```
     and multiple extents are grouped like so:
@@ -212,7 +212,7 @@ if __name__ == "__main__":
     compiled = MachineCodeIO.ploadall("../libc.so.6")
 
     for name, extent in compiled.items():
-        print("%s (base == %u)" % (name, extent["shift"]))
+        print("%s (offset == %u)" % (name, extent["offset"]))
 
         for i in extent["instructions"]:
             print("\t0x%x\t%s\t%s" % (i.address, i.mnemonic, i.op_str))
