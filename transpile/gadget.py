@@ -22,9 +22,10 @@ class Gadgets:
         return s
 
     def __tostring(self, ret):
-        v = self.gadgets[ret]
-        s = "0x" + str(v[0]) + '\t'
-        s += " ; ".join(v[1:])
+        values = self.gadgets[ret]
+        s = "0x{}\t".format(str(values[0][0]))
+        for v in values:
+            s += "{}; ".format(v[1])
         return s
 
     def find_gadgets(self):
@@ -42,17 +43,12 @@ class Gadgets:
             if i.mnemonic == "ret":
                 isgadget = True  # start gadget chain
                 g_point = i.address
-                self.gadgets[g_point] = ["addr"]
+                self.gadgets[g_point] = []
 
             if isgadget:
-                self.gadgets[g_point][0] = i.address
-                self.gadgets[g_point].insert(1, i.mnemonic + " " + i.op_str)
+                self.gadgets[g_point].insert(0, (i.address, i.mnemonic + (' ' if i.op_str else '') + i.op_str))
                 if len(self.gadgets[g_point]) > self.depth:
                     isgadget = False  # end gadget chain
-
-    def __list_all(self):
-        for i, j in self.gadgets.items():
-            print("ret addr: 0x%x\t" % i, "gadgets:", j)
 
     def search(self, pattern, verbose=0):
         """ verbose level:
@@ -61,7 +57,7 @@ class Gadgets:
             2 = print gadget found + gadget string
             3 = print gadget not found
         """
-        pattern = " ; ".join(i.strip() for i in pattern.split(';') if i.strip())
+        pattern = "; ".join(i.strip() for i in pattern.split(';') if i.strip())
         
         print(pattern)
         glist = {}
@@ -93,4 +89,7 @@ if __name__ == "__main__":
     
     print(g)
     print('----------------')
-    print(g.search('pop ...; ret ;', 1))
+    for i in g.gadgets:
+        print(g.gadgets, end='\n\n')
+    print('----------------')
+    g.search('pop ...; ret ;', 2)
