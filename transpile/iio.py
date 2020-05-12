@@ -175,7 +175,7 @@ class MachineCodeIO(AssemblyIO):
             code = io.BytesIO(extent.code)
 
             for offset in range(min(16, extent.size)): # Intel-specific##############################################################
-                print("Loading extent from object (extent \"%s\", offset %u..." % (extent.name, offset))
+                print("Loading extent from object (extent \"%s\", offset %u)..." % (extent.name, offset))
                 code.seek(0, os.SEEK_SET)
                 extents[(extent.name, offset)] = MachineCodeIO.load(io.BytesIO(code.read()), _isa, base, offset)
 
@@ -215,7 +215,7 @@ if __name__ == "__main__":
         print("\"%s\", offset %u" % name_offset)
 
         for i in extent["instructions"]:
-            print("\t0x%x\t\t%s\t%s" % (i.address, i.mnemonic, i.op_str))
+            print("\t0x%.10x\t%s\t%s" % (i.address, i.mnemonic, i.op_str))
     sys.exit()
     print(compiled)
     source = AssemblyIO.pload("../x86-32-little.S", isa.parse("x86-32-little"))
