@@ -134,10 +134,36 @@ class Transpiler:
         chains = {"mprotect": Transpiler.mprotect}
 
         if Transpiler._isa_mismatch(*objs):
-            raise TypeError("ISA mismatch")
+            raise TypeError("ISA mismatch")\
+        _isa = None
+
+        for o in objs:
+            for e in objs[e].values():
+                if "isa" in e:
+                    _isa = e["isa"]
+                    break
+
+            if _isa is not None:
+                break
+
+        if _isa is None:
+            raise ValueError("no ISA")
+        _isa = isa.correlate(copy.deepcopy(_isa))
 
         if which in chains:
-            return chains[which](*objs, **kwargs)
+            chain = chains[which](*objs, **kwargs)
+            packer = '>' if _isa["capstone"]["endianness"] \
+                == capstone.CS_MODE_BIG_ENDIAN else '<'
+            packer += 'I' if _isa["capstone"]["mode"] == capstone.CS_MODE_32 \
+                else 'L'
+
+            for i, e in enumerate(chain):
+                if isinstance(e, bytes):
+                    continue
+                else:
+                    # treat as a machine word
+
+                    chain[i] = struct.pack(packer, e)
         raise ValueError("unsupported chain \"%s\"" % which)
 
     @staticmethod
@@ -160,17 +186,15 @@ class Transpiler:
         """incrementally fill a register"""
         # zero out the register
 
-        chain = [Transpiler._first_matching_gadget("xor %s, %s;ret" % (reg, reg),
-                                                   *gadgetss)]
+        chain = [Transpiler._first_matching_gadget(
+            "xor %s, %s;ret" % (reg, reg), *gadgetss)]
 
         # fill the register
-
-        g = None
 
         g = Transpiler._first_matching_gadget(
             "((add %s, -1)|(dec %s)|(sub %s, 1));ret" % (reg, reg, reg)
                 if n < 0 else
-                    "((add %s, 1)|(inc %s)|(sub %s, -1));ret" % (reg, reg, reg),
+                "((add %s, 1)|(inc %s)|(sub %s, -1));ret" % (reg, reg, reg),
             *gadgetss)
 
         if g is None:
