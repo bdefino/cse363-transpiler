@@ -251,7 +251,7 @@ class Transpiler:
         # attempt to match (sub)permutations of direct `pop REG`s
 
         chain = []
-        matched = {} # `{ordered registers: gadget address}`
+        direct = {} # `{ordered registers: gadget address}`
         nregs = len(regs)
         unmatched = set(regs.keys())
 
@@ -267,7 +267,7 @@ class Transpiler:
 
                 for r in perm:
                     unmatched.remove(r)
-                matched[tuple(perm)] = pop
+                direct[tuple(perm)] = pop
                 matched_any = True
                 break
 
@@ -275,17 +275,40 @@ class Transpiler:
                 nregs -= 1
             nregs = min((len(unmatched), nregs))
 
-        if matched:
+        if direct \
+                and unmatched:
             # attempt to indirectly assign via `pop MATCHED; move REG`
 
             for u in set(unmatched):
-                # generate a pool of possible temporary registers
+                for d in set(regs.keys()).difference(unmatched):
+                    # attempt to fully match `pop MATCHED; move REG`
 
-                pool = set()
+                    pop_move = Transpiler._first_matching_gadget(
+                        "pop %s;mov %s, %s;ret" % (m, u, d), *gadgetss)
 
-        # populate matched registers
+                    if pop_move:
+                        chain += [pop_move, regs[u]]
+                        unmatched.remove(u)
+                        break
 
-        for rs, pop in matched.items():
+                    # attempt to match a composite load (via multiple gadgets)
+
+                    pop = Transpiler._first_matching_gadget("pop %s;ret" % d,
+                        *gadgetss)
+
+                    if pop is None:
+                        break
+                    move = Transpiler._first_matching_gadget(
+                        "move %s, %s;ret" % (u, d), *gadgetss)
+
+                    if move is None:
+                        break
+                    chain += [pop, regs[u], move]
+                    unmatched.remove(u)
+
+        # populate directly-loadable registers
+
+        for rs, pop in direct.items():
             # add gadget
 
             chain.append(pop)
