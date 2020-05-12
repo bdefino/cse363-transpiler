@@ -1,4 +1,5 @@
 import capstone
+import copy
 import io
 import itertools
 import re
@@ -6,7 +7,7 @@ import struct
 import traceback
 
 try:
-    from . import gadget, iio
+    from . import gadget, iio, isa
 except ImportError:
     import os
     import sys
@@ -15,6 +16,7 @@ except ImportError:
 
     import gadget
     import iio
+    import isa
 
 POP_REG_COMBO_POOL = {
     "single": [
@@ -134,11 +136,11 @@ class Transpiler:
         chains = {"mprotect": Transpiler.mprotect}
 
         if Transpiler._isa_mismatch(*objs):
-            raise TypeError("ISA mismatch")\
+            raise TypeError("ISA mismatch")
         _isa = None
 
         for o in objs:
-            for e in objs[e].values():
+            for e in o.values():
                 if "isa" in e:
                     _isa = e["isa"]
                     break
@@ -164,6 +166,7 @@ class Transpiler:
                     # treat as a machine word
 
                     chain[i] = struct.pack(packer, e)
+            return b"".join(chain)
         raise ValueError("unsupported chain \"%s\"" % which)
 
     @staticmethod
@@ -453,7 +456,7 @@ class Transpiler:
         print("---")
         print(chain)
         print("---")
-        return b"".join(chain)
+        return chain
 
 
 if __name__ == "__main__":
