@@ -28,9 +28,9 @@ class BaseInstructionIO:
         ```
         {
             "base": base,
-            "extent": analyze.CodeSegment/bytes,
             "instructions": iterable of capstone.CsInsn,
-            "isa": ISA
+            "isa": ISA,
+            "shift": shift (for variable-length ISAs)
         }
         ```
     and multiple extents are grouped like so:
@@ -43,7 +43,7 @@ class BaseInstructionIO:
         raise NotImplementedError()
 
     @staticmethod
-    def load(fp, _isa, offset=0):
+    def load(fp, _isa, base=0, offset = 0):
         """load a single executable extent from a file"""
         raise NotImplementedError()
 
@@ -58,7 +58,7 @@ class BaseInstructionIO:
         raise NotImplementedError()
 
     @staticmethod
-    def pload(path, _isa, offset=0):
+    def pload(path, _isa, base=0, offset = 0):
         """load a single executable extent at a path"""
         raise NotImplementedError()
 
@@ -78,21 +78,20 @@ class AssemblyIO(BaseInstructionIO):
             fp.write(b"%b %b\n" % tuple((s.encode("ascii") for s in (i.mnemonic, i.op_str))))
 
     @staticmethod
-    def load(fp, _isa, offset=0):
+    def load(fp, _isa, base=0, offset = 0):
         """load a single executable extent from a file"""
         _isa = isa.correlate(copy.deepcopy(_isa))
 
         # first, assemble
 
-        _extent = fp.read()
+        fp.seek(offset, os.SEEK_CUR)
         assembled = bytes(keystone.Ks(_isa["keystone"]["arch"],
-            _isa["keystone"]["endianness"] + _isa["keystone"]["mode"]).asm(_extent)[0])
+            _isa["keystone"]["endianness"] + _isa["keystone"]["mode"]).asm(
+                fp.read())[0])
 
         # disassemble
 
-        extent = MachineCodeIO.load(io.BytesIO(assembled), _isa, offset)
-        extent["extent"] = _extent
-        return extent
+        return MachineCodeIO.load(io.BytesIO(assembled), _isa, base)
 
     @staticmethod
     def pdump(path, extent):
@@ -101,12 +100,12 @@ class AssemblyIO(BaseInstructionIO):
             AssemblyIO.dump(fp, extent)
 
     @staticmethod
-    def pload(path, _isa, offset=0):
+    def pload(path, _isa, base=0, offset = 0):
         """load a single executable extent at a path"""
         _isa = isa.correlate(copy.deepcopy(_isa))
 
         with open(path, "rb") as fp:
-            return AssemblyIO.load(fp, _isa, offset)
+            return AssemblyIO.load(fp, _isa, base, offset)
 
 
 class MachineCodeIO(AssemblyIO):
@@ -129,25 +128,21 @@ class MachineCodeIO(AssemblyIO):
             b.getvalue())[0]))
 
     @staticmethod
-    def load(fp, _isa, offset=0):
+    def load(fp, _isa, base=0, offset = 0):
         """load a single executable extent from a file"""
         _isa = isa.correlate(copy.deepcopy(_isa))
 
-        # need extent
-
-        #start = fp.tell()
-        #extent = fp.read()
-        #fp.seek(start, os.SEEK_SET)
-
         # load
 
+        fp.seek(offset, os.SEEK_CUR)
         return {
-            "base": offset,
-            "extent": None,
+            "base": base,
             "instructions": capstone.Cs(_isa["capstone"]["arch"],
                 _isa["capstone"]["endianness"]
-                    + _isa["capstone"]["mode"]).disasm(fp.read(), offset),
-            "isa": _isa
+                    + _isa["capstone"]["mode"]).disasm(fp.read(),
+                        base + offset),
+            "isa": _isa,
+            "offset": offset
         }
 
     @staticmethod
@@ -179,9 +174,10 @@ class MachineCodeIO(AssemblyIO):
                 else extent.addr
             code = io.BytesIO(extent.code)
 
-            for i in range(15): # intel-specific##############################################################
-                code.seek(i, os.SEEK_SET)
-                extents[extent.name + (" (shift == %u)" % i)] = MachineCodeIO.load(code, _isa, base + i)
+            for offset in range(15): # Intel-specific##############################################################
+                code.seek(0, os.SEEK_SET)
+                extents[extent.name +] = MachineCodeIO.load(code, _isa, base,
+                    offset)
 
         # filter out unmatched extents
 
@@ -196,12 +192,12 @@ class MachineCodeIO(AssemblyIO):
             MachineCodeIO.dump(fp, extent)
 
     @staticmethod
-    def pload(path, _isa, offset=0):
+    def pload(path, _isa, base=0, offset = 0):
         """load a single executable extent at a path"""
         _isa = isa.correlate(copy.deepcopy(_isa))
 
         with open(path, "rb") as fp:
-            return MachineCodeIO.load(fp)
+            return MachineCodeIO.load(fp, base, offset)
 
     @staticmethod
     def ploadall(path, extents=None):
@@ -216,7 +212,7 @@ if __name__ == "__main__":
     compiled = MachineCodeIO.ploadall("../libc.so.6")
 
     for name, extent in compiled.items():
-        print(name)
+        print("%s (base == %u)" % (name, extent["shift"]))
 
         for i in extent["instructions"]:
             print("\t0x%x\t%s\t%s" % (i.address, i.mnemonic, i.op_str))
