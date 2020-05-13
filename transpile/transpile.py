@@ -185,10 +185,10 @@ class Transpiler:
             gadgets = g.search(pattern)
 
             if gadgets:
-                addr, gadget = list(gadgets.items())[0]
-                print("0x%.16x\t%s" % (addr, gadget))
-                return addr
-        return None
+                addr, s = list(gadgets.items())[0]
+                print("0x%.16x\t%s" % (addr, s))
+                return addr, s
+        return None, None
 
     @staticmethod
     def _inc_reg_n(reg, n=0, *gadgetss):
@@ -196,7 +196,10 @@ class Transpiler:
         # zero out the register
 
         chain = [Transpiler._first_matching_gadget(
-            "xor %s, %s;ret" % (reg, reg), *gadgetss)]
+            "xor %s, %s;ret" % (reg, reg), *gadgetss)[0]]
+
+        if chain[0] is None:
+            return
 
         # fill the register
 
@@ -204,7 +207,7 @@ class Transpiler:
             "((add %s, -1)|(dec %s)|(sub %s, 1));ret" % (reg, reg, reg)
                 if n < 0 else
                 "((add %s, 1)|(inc %s)|(sub %s, -1));ret" % (reg, reg, reg),
-            *gadgetss)
+            *gadgetss)[0]
 
         if g is None:
             return
@@ -240,6 +243,11 @@ class Transpiler:
         return False
 
     @staticmethod
+    def _padding(isa, gadget_string):
+        """generate `pop` padding for a gadget string"""
+        return [0 for i in range(len(re.findall("[^\w]*pop[^\w]*")))]
+
+    @staticmethod
     def _reg_assign(*gadgetss, **regs):#########################################incorporate temporary registers
         """
         return a chain for assigning a value to a register;
@@ -260,7 +268,7 @@ class Transpiler:
 
             for perm in itertools.permutations(unmatched, nregs):
                 pattern = ';'.join(["pop " + r for r in perm] + ["ret"])
-                pop = Transpiler._first_matching_gadget(pattern, *gadgetss)
+                pop = Transpiler._first_matching_gadget(pattern, *gadgetss)[0]
 
                 if pop is None:
                     continue
@@ -288,7 +296,7 @@ class Transpiler:
                     continue
 
                 pop_move = Transpiler._first_matching_gadget(
-                    "pop %s;mov %s, %s;ret" % (p, u, p), *gadgetss)
+                    "pop %s;mov %s, %s;ret" % (p, u, p), *gadgetss)[0]
 
                 if pop_move:
                     chain += [pop_move, regs[u]]
@@ -298,12 +306,13 @@ class Transpiler:
 
                 # attempt to match a composite load (via multiple gadgets)
 
-                pop = Transpiler._first_matching_gadget("pop %s;ret" % p, *gadgetss)
+                pop = Transpiler._first_matching_gadget("pop %s;ret" % p,
+                    *gadgetss)[0]
 
                 if pop is None:
                     break
                 move = Transpiler._first_matching_gadget(
-                    "mov %s, %s;ret" % (u, p), *gadgetss)
+                    "mov %s, %s;ret" % (u, p), *gadgetss)[0]
 
                 if move is None:
                     break
@@ -355,7 +364,7 @@ class Transpiler:
 
         for k, v in POP_REG_COMBO_POOL.items():
             for regex in v:
-                gg = Transpiler._first_matching_gadget(regex, *gadgetss)
+                gg = Transpiler._first_matching_gadget(regex, *gadgetss)[0]
                 if gg:
                     re_output = re.findall("e[a-d]x", regex)
                     if re_output:
@@ -396,7 +405,7 @@ class Transpiler:
 
         # find reg
         gadget = Transpiler._first_matching_gadget(
-            "pop %s" % reg, *gadgetss)
+            "pop %s" % reg, *gadgetss)[0]
 
         # connect chain
 
@@ -448,11 +457,12 @@ class Transpiler:
 
         if chain is None:
             return chain
-        chain.append(Transpiler._first_matching_gadget(
-            "int 0x80", *gadgetss))
+        a, s = Transpiler._first_matching_gadget("int 0x80", *gadgetss))
 
-        if chain[-1] is None:
+        if a is None:
             return
+        chain.append(a)
+        chain += Transpiler._padding(s)
         chain.append(kwargs["buf"])
         return chain
 
