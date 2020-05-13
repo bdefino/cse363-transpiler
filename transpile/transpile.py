@@ -243,9 +243,9 @@ class Transpiler:
         return False
 
     @staticmethod
-    def _padding(isa, gadget_string):
-        """generate `pop` padding for a gadget string"""
-        return [0 for i in range(len(re.findall("[^\w]*pop[^\w]*")))]
+    def _padding(s):
+        """generate `pop .*` padding for a gadget string"""
+        return [0 for i in range(len(re.findall("[^\w]*pop[^\w]*", s)))]
 
     @staticmethod
     def _reg_assign(*gadgetss, **regs):#########################################incorporate temporary registers
