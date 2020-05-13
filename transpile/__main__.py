@@ -104,7 +104,7 @@ def main(argv):
             all_permutations = True
         elif k == "-b":
             try:
-                buf = int(v)
+                buf = parse_int(v)
             except ValueError:
                 print("Invalid address.", file = sys.stderr)
                 help(argv[0])
@@ -118,7 +118,7 @@ def main(argv):
             isas = v
         elif k == "-l":
             try:
-                buflen = int(v)
+                buflen = parse_int(v)
             except ValueError:
                 print("Invalid length.", file = sys.stderr)
                 help(argv[0])
@@ -127,7 +127,7 @@ def main(argv):
             opath = v
         elif k == "-p":
             try:
-                rop = int(v)
+                rop = parse_int(v)
             except ValueError:
                 print("Invalid address.", file = sys.stderr)
                 help(argv[0])
@@ -169,6 +169,13 @@ def main(argv):
         return 1
     return 0
 
+def parse_int(s):
+    """parse an integer in (hexa)decimal"""
+    if set(s).intersection(set("abcdef")) \
+            or s.lower().startswith("0x"):
+        return int(s, 16)
+    return int(s)
+
 def parse_source(s):
     """parse `(path, base, {section: base})` from `"PATH[:SECTION=BASE...]"`"""
     base = 0
@@ -179,7 +186,7 @@ def parse_source(s):
         if '=' in s:
             path, s = s.split('=', 1)
             base, s = s.split(':', 1)
-            base = int(base)
+            base = parse_int(base)
         else:
             path, s = s.split(':', 1)
 
@@ -189,12 +196,12 @@ def parse_source(s):
 
             try:
                 section, base = sb.split('=')
-                sections[section] = int(base)
+                sections[section] = parse_int(base)
             except ValueError:
                 raise ValueError("invalid section specifier")
     elif '=' in s:
         path, s = s.split('=', 1)
-        base = int(s)
+        base = parse_int(s)
     return path, base, sections
 
 if __name__ == "__main__":
