@@ -462,7 +462,7 @@ class Transpiler:
         if a is None:
             return
         chain.append(a)
-        chain += Transpiler._padding(s)
+        chain += 2 * Transpiler._padding(s) # account for BS
         chain.append(kwargs["buf"])
         return chain
 
