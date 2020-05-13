@@ -457,7 +457,7 @@ class Transpiler:
 
         if chain is None:
             return chain
-        a, s = Transpiler._first_matching_gadget("int 0x80", *gadgetss))
+        a, s = Transpiler._first_matching_gadget("int 0x80", *gadgetss)
 
         if a is None:
             return
