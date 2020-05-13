@@ -144,6 +144,7 @@ def main(argv):
         return 1
 
     try:
+        print(sources)
         sources = [iio.MachineCodeIO.ploadall(k, v[0], **v[1])
             for k, v in sources.items()]
 
