@@ -1,0 +1,2 @@
+#!/usr/bin/env sh
+python3 __main__.py -b 0x1 -c -l 0x2 -o mprotect.chain -p 0x3 mprotect /usr/lib/i386-linux-gnu/libc.so.6
