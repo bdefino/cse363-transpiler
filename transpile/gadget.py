@@ -16,7 +16,7 @@ class Gadgets:
     def __init__(self, cap):
         self.cap = cap
         self.gadgets = {}
-        self.depth = 5
+        self.depth = 7
         self.find_gadgets()
 
     def __doc__(self):
